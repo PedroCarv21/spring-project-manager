@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PostgreSQL - Spring Project Manager",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "spring-project-manager",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}
