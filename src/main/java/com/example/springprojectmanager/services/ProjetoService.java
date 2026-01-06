@@ -1,6 +1,6 @@
 package com.example.springprojectmanager.services;
 
-import com.example.springprojectmanager.NaoEncontradoException;
+import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.repositories.ProjetoRepository;

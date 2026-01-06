@@ -5,9 +5,13 @@ import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusProjetoAtualizacao;
 import com.example.springprojectmanager.mappers.ProjetoMapper;
 import com.example.springprojectmanager.services.ProjetoService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -15,23 +19,31 @@ import java.util.UUID;
 @RestController
 @RequestMapping("projetos/")
 @RequiredArgsConstructor
+@Validated
 public class ProjetoController implements CriadorLocation{
 
     private final ProjetoService projetoService;
     private final ProjetoMapper projetoMapper;
 
     @PostMapping
-    public ResponseEntity<Projeto> salvar(@RequestParam(value = "nome", required = true) String nome){
+    public ResponseEntity<Projeto> salvar(
+            @RequestParam(value = "nome")
+            @NotBlank(message = "Informe algum nome para o seu projeto.")
+            String nome){
         Projeto projeto = new Projeto(nome, StatusProjeto.INICIADO);
         Projeto projetoSalvo = this.projetoService.salvar(projeto);
         return ResponseEntity.created(gerarLocation(projetoSalvo.getId())).body(projeto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("{id}")
     public ResponseEntity<Projeto> atualizar(
-            @PathVariable("id") UUID id,
-            @RequestParam(value = "nome") String nome,
-            @RequestParam(value = "status") StatusProjetoAtualizacao statusProjetoAtualizacao){
+            @PathVariable("id")
+            UUID id,
+            @NotBlank(message = "Informe algum nome para o seu projeto.")
+            @RequestParam(value = "nome")
+            String nome,
+            @RequestParam(value = "status")
+            StatusProjetoAtualizacao statusProjetoAtualizacao){
 
         StatusProjeto statusProjeto = this.projetoMapper.toStatusProjeto(statusProjetoAtualizacao);
 
@@ -52,8 +64,8 @@ public class ProjetoController implements CriadorLocation{
         return ResponseEntity.ok(pesquisa);
     }
 
-    @DeleteMapping
-    public ResponseEntity<Void> deletar(UUID id){
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deletar(@PathVariable("id") UUID id){
         this.projetoService.deletar(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,4 +1,4 @@
-package com.example.springprojectmanager;
+package com.example.springprojectmanager.exceptions;
 
 public class NaoEncontradoException extends RuntimeException {
     public NaoEncontradoException(String message) {
