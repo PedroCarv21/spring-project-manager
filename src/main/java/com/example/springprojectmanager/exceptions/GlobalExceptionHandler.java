@@ -32,4 +32,10 @@ public class GlobalExceptionHandler {
 
         return new ErroResponse("Campos com erros semanticos", campoErroList);
     }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ConflitoException.class)
+    public ErroResponse tratarConflitoException(ConflitoException e){
+        return new ErroResponse(e.getMessage(), List.of());
+    }
 }

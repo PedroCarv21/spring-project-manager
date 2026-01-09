@@ -1,5 +1,7 @@
 package com.example.springprojectmanager.services;
 
+import com.example.springprojectmanager.enums.StatusTime;
+import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.enums.StatusProjeto;
@@ -25,10 +27,17 @@ public class ProjetoService {
     }
 
     public Projeto atualizar(Projeto projetoAtualizado){
-        Optional<Projeto> projetoOptional = buscarPorId(projetoAtualizado.getId());
-        Projeto projetoRegistrado = projetoOptional.get();
+        Projeto projetoRegistrado = buscarPorId(projetoAtualizado.getId());
         projetoRegistrado.setNome(projetoAtualizado.getNome());
-        projetoRegistrado.setStatusProjeto(projetoAtualizado.getStatusProjeto());
+        projetoRegistrado.setStatus(projetoAtualizado.getStatus());
+
+        if (projetoRegistrado.getStatus().equals(StatusProjeto.CONCLUIDO)){
+            atualizarStatusDosTimes(projetoRegistrado, StatusTime.ENCERRADO);
+        }
+        else{
+            atualizarStatusDosTimes(projetoRegistrado, StatusTime.ATIVO);
+        }
+
         return salvar(projetoRegistrado);
     }
 
@@ -43,7 +52,7 @@ public class ProjetoService {
             specs = specs.and(filtro);
         }
         if (statusProjeto != null){
-            filtro = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("statusProjeto"), statusProjeto);
+            filtro = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("status"), statusProjeto);
             specs = specs.and(filtro);
         }
 
@@ -51,18 +60,33 @@ public class ProjetoService {
         return this.projetoRepository.findAll(specs, pageRequest);
     }
 
-    public void deletar(UUID id){
-        Optional<Projeto> projetoOptional = this.buscarPorId(id);
-        Projeto projeto = projetoOptional.get();
-        projeto.setStatusProjeto(StatusProjeto.CANCELADO);
+    public void deletar(String nome){
+        Projeto projeto = this.buscarPorNome(nome);
+        if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
+            throw new ConflitoException("Esse projeto já foi cancelado.");
+        }
+        projeto.setStatus(StatusProjeto.CANCELADO);
+        atualizarStatusDosTimes(projeto, StatusTime.ENCERRADO);
         this.projetoRepository.save(projeto);
     }
 
-    private Optional<Projeto> buscarPorId(UUID id){
+    protected void atualizarStatusDosTimes(Projeto projeto, StatusTime statusTime){
+        projeto.getTimes().forEach(time -> time.setStatus(statusTime));
+    }
+
+    protected Projeto buscarPorNome(String nome){
+        Optional<Projeto> projetoOptional = this.projetoRepository.findByNome(nome);
+        if (projetoOptional.isEmpty()){
+            throw new NaoEncontradoException("Nao foi encontrado um projeto com o nome " + nome);
+        }
+        return projetoOptional.get();
+    }
+
+    protected Projeto buscarPorId(UUID id){
         Optional<Projeto> projetoOptional = this.projetoRepository.findById(id);
         if (projetoOptional.isEmpty()){
             throw new NaoEncontradoException("Nao foi encontrado um projeto com este ID");
         }
-        return projetoOptional;
+        return projetoOptional.get();
     }
 }

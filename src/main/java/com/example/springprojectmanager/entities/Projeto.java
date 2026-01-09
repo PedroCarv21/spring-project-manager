@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -13,14 +15,16 @@ public class Projeto extends BaseEntity{
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private StatusProjeto statusProjeto;
+    private StatusProjeto status;
+    @OneToMany(mappedBy = "projeto")
+    private List<Time> times;
 
     public Projeto(){
 
     }
 
-    public Projeto(String nome, StatusProjeto statusProjeto) {
+    public Projeto(String nome, StatusProjeto status) {
         super(nome);
-        this.statusProjeto = statusProjeto;
+        this.status = status;
     }
 }
