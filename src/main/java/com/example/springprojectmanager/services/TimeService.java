@@ -2,12 +2,14 @@ package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
+import com.example.springprojectmanager.entities.Usuario;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusTime;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
 import com.example.springprojectmanager.repositories.TimeRepository;
+import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,9 @@ public class TimeService {
     private final TimeRepository timeRepository;
     private final ProjetoRepository projetoRepository;
     private final ProjetoService projetoService;
+    private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
+    private final ProjetoUsuarioService projetoUsuarioService;
+    private final TimeUsuarioService timeUsuarioService;
 
     public List<Time> pesquisar(String nomeProjeto, String nomeTime){
         Optional<Projeto> projetoOptional = this.projetoRepository.findByNome(nomeProjeto);
@@ -40,12 +45,27 @@ public class TimeService {
     }
 
     public Time salvar(String nomeProjeto, String nomeTime){
-        Projeto projeto = this.projetoService.buscarPorNome(nomeProjeto);
+
+        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+
+        Projeto projeto = this.projetoService.capturarProjetoDaLista(projetos, nomeProjeto);
+
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
             throw new ConflitoException("Não é possível criar um time em um projeto que já foi " + projeto.getStatus().toString());
         }
+
+        boolean existeTimeComEsteNome = projeto.getTimes().stream().anyMatch(time -> time.getNome().equals(nomeTime));
+
+        if (existeTimeComEsteNome){
+            throw new ConflitoException("Já existe um time chamado '" + nomeTime + "' dentro do projeto '" + nomeProjeto + "'.");
+        }
+
         Time time = new Time(nomeTime, projeto, StatusTime.ATIVO);
-        return this.timeRepository.save(time);
+        Time timeSalvo = this.timeRepository.save(time);
+        this.timeUsuarioService.salvar(timeSalvo, usuarioAutenticado);
+        timeSalvo.getProjeto().getTimes().add(timeSalvo);
+        return timeSalvo;
     }
 
     public void deletar(String nomeProjeto, String nomeTime){

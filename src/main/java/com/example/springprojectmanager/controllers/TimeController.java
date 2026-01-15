@@ -1,13 +1,19 @@
 package com.example.springprojectmanager.controllers;
 
+import com.example.springprojectmanager.dtos.ProjetoTimeReponseDTO;
 import com.example.springprojectmanager.dtos.TimeResponseDTO;
+import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
 import com.example.springprojectmanager.enums.StatusTime;
+import com.example.springprojectmanager.mappers.ProjetoMapper;
 import com.example.springprojectmanager.mappers.TimeMapper;
+import com.example.springprojectmanager.repositories.ProjetoRepository;
+import com.example.springprojectmanager.services.ProjetoService;
 import com.example.springprojectmanager.services.TimeService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +28,9 @@ public class TimeController implements CriadorLocation{
 
     private final TimeService timeService;
     private final TimeMapper timeMapper;
+    private final ProjetoService projetoService;
+    private final ProjetoMapper projetoMapper;
+    private final ProjetoRepository projetoRepository;
 
     @GetMapping
     public ResponseEntity<List<TimeResponseDTO>> pesquisar(
@@ -41,16 +50,17 @@ public class TimeController implements CriadorLocation{
     }
 
     @PostMapping
-    public ResponseEntity<TimeResponseDTO> salvar(
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
+    public ResponseEntity<ProjetoTimeReponseDTO> salvar(
             @NotBlank(message = "Informe um nome para o novo projeto.")
             @RequestParam("nome_projeto") String nomeProjeto,
             @NotBlank(message = "Informe um nome para o novo time.")
             @RequestParam("nome_time") String nomeTime
     ){
         Time timeSalvo = this.timeService.salvar(nomeProjeto, nomeTime);
-        TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(timeSalvo);
 
-        return ResponseEntity.created(gerarLocation(timeSalvo.getId())).body(timeResponseDTO);
+        ProjetoTimeReponseDTO projetoTimeResponseDTO = this.projetoMapper.toProjetoTimeResponseDTO(timeSalvo.getProjeto());
+        return ResponseEntity.created(gerarLocation(timeSalvo.getId())).body(projetoTimeResponseDTO);
     }
 
     @PutMapping("/{id}")
