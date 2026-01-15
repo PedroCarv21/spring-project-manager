@@ -4,6 +4,7 @@ import com.example.springprojectmanager.dtos.CampoErro;
 import com.example.springprojectmanager.dtos.ErroResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -37,5 +38,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflitoException.class)
     public ErroResponse tratarConflitoException(ConflitoException e){
         return new ErroResponse(e.getMessage(), List.of());
+    }
+
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ErroResponse tratarMethodArgumentNotValidException(MethodArgumentNotValidException e){
+
+        List<CampoErro> campoErroList = e.getFieldErrors()
+                .stream()
+                .map(fieldError -> new CampoErro(fieldError.getField(), fieldError.getDefaultMessage()))
+                .toList();
+
+        return new ErroResponse("Campo(s) preenchido(s) incorretamente", campoErroList);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ErroResponse tratarAccessDeniedException(){
+        return new ErroResponse("Usuario não autorizado.", List.of());
     }
 }

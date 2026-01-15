@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -16,8 +18,11 @@ public class Time extends BaseEntity{
     private StatusTime status;
 
     @ManyToOne
-    @JoinColumn(name = "id_projeto")
+    @JoinColumn(name = "projeto_id")
     private Projeto projeto;
+
+    @OneToMany(mappedBy = "time")
+    private List<TimeUsuario> usuariosRelacionados;
 
     public Time() {
     }

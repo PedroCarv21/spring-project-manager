@@ -14,4 +14,4 @@ spring:
       ddl-auto: none
 springdoc:
   swagger-ui:
-    path: /swagger
+    path: /

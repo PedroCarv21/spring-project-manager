@@ -16,8 +16,12 @@ public class Projeto extends BaseEntity{
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private StatusProjeto status;
+
     @OneToMany(mappedBy = "projeto")
     private List<Time> times;
+
+    @OneToMany(mappedBy = "projeto")
+    private List<ProjetoUsuario> UsuariosRelacionados;
 
     public Projeto(){
 

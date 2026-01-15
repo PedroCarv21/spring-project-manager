@@ -10,9 +10,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,45 +31,42 @@ public class ProjetoController implements CriadorLocation{
             @RequestParam(value = "nome")
             @NotBlank(message = "Informe algum nome para o seu projeto.")
             String nome){
-        Projeto projeto = new Projeto(nome, StatusProjeto.INICIADO);
-        Projeto projetoSalvo = this.projetoService.salvar(projeto);
+        Projeto projetoSalvo = this.projetoService.salvar(nome);
         ProjetoResponseDTO projetoResponseDTO = this.projetoMapper.toDTO(projetoSalvo);
         return ResponseEntity.created(gerarLocation(projetoSalvo.getId())).body(projetoResponseDTO);
     }
 
-    @PutMapping("{id}")
+    @PutMapping
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeAtual)")
     public ResponseEntity<ProjetoResponseDTO> atualizar(
-            @PathVariable("id")
-            UUID id,
-            @NotBlank(message = "Informe algum nome para o seu projeto.")
-            @RequestParam(value = "nome")
-            String nome,
+            @NotBlank(message = "Informe nome atual do seu projeto.")
+            @RequestParam(value = "nome_atual")
+            String nomeAtual,
+            @RequestParam(value = "novo_nome", required = false)
+            String novoNome,
             @RequestParam(value = "status")
             StatusProjetoAtualizacao statusProjetoAtualizacao){
 
         StatusProjeto statusProjeto = this.projetoMapper.toStatusProjeto(statusProjetoAtualizacao);
-
-        Projeto projeto = new Projeto(nome, statusProjeto);
-        projeto.setId(id);
-        Projeto projetoSalvo = this.projetoService.atualizar(projeto);
-        ProjetoResponseDTO projetoResponseDTO = this.projetoMapper.toDTO(projetoSalvo);
+        Projeto projetoAtualizado = this.projetoService.atualizar(nomeAtual, novoNome, statusProjeto);
+        ProjetoResponseDTO projetoResponseDTO = this.projetoMapper.toDTO(projetoAtualizado);
         return ResponseEntity.ok(projetoResponseDTO);
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProjetoResponseDTO>> pesquisar(
-            @RequestParam(name = "pagina", defaultValue = "0") Integer pagina,
-            @RequestParam(name = "tamanho_pagina", defaultValue = "3") Integer tamanhoPagina,
+    public ResponseEntity<List<ProjetoResponseDTO>> pesquisar(
             @RequestParam(name = "nome", required = false) String nome,
             @RequestParam(name = "status", required = false) StatusProjeto statusProjeto
     ){
-        Page<Projeto> pesquisa = this.projetoService.pesquisar(pagina, tamanhoPagina, nome, statusProjeto);
 
-        Page<ProjetoResponseDTO> projetoResponseDTOPage = pesquisa.map(this.projetoMapper::toDTO);
-        return ResponseEntity.ok(projetoResponseDTOPage);
+        List<Projeto> projetos = this.projetoService.pesquisar(nome, statusProjeto);
+
+        List<ProjetoResponseDTO> projetoResponseDTOList = projetos.stream().map(this.projetoMapper::toDTO).toList();
+        return ResponseEntity.ok(projetoResponseDTOList);
     }
 
     @DeleteMapping
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nome)")
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome") String nome){
