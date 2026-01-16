@@ -30,7 +30,7 @@ public class ProjetoService {
 
     public Projeto salvar(String nome){
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
         boolean projetoComNomeJaExistente = projetos.stream().anyMatch(projeto -> projeto.getNome().equals(nome));
         if (projetoComNomeJaExistente){
             throw new ConflitoException("Voce ja criou um projeto chamado " + nome);
@@ -44,8 +44,7 @@ public class ProjetoService {
 
     public Projeto atualizar(String nomeAtual, String novoNome, StatusProjeto statusProjeto){
 
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         if (novoNome != null) {
             if (this.existeProjetoComEsteNome(projetos, novoNome) && !nomeAtual.equals(novoNome)) {
@@ -63,9 +62,8 @@ public class ProjetoService {
     }
 
     public boolean possuiAutorizacaoParaAtualizar(String nomeAtual){
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario(usuarioAutenticado);
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         boolean existeProjetoComEsteNome = this.existeProjetoComEsteNome(projetos, nomeAtual);
         if (!existeProjetoComEsteNome){
@@ -85,8 +83,7 @@ public class ProjetoService {
 
     public List<Projeto> pesquisar(String nome, StatusProjeto statusProjeto){
 
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         Stream<Projeto> projetoStream = projetos.stream();
 
@@ -106,8 +103,7 @@ public class ProjetoService {
 
     public void deletar(String nome){
 
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         Projeto projetoCapturado = this.capturarProjetoDaLista(projetos, nome);
 

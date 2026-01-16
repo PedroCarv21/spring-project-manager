@@ -1,5 +1,6 @@
 package com.example.springprojectmanager.services;
 
+import com.example.springprojectmanager.entities.BaseEntity;
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
 import com.example.springprojectmanager.entities.Usuario;
@@ -28,26 +29,28 @@ public class TimeService {
     private final ProjetoUsuarioService projetoUsuarioService;
     private final TimeUsuarioService timeUsuarioService;
 
-    public List<Time> pesquisar(String nomeProjeto, String nomeTime){
-        Optional<Projeto> projetoOptional = this.projetoRepository.findByNome(nomeProjeto);
-        if (projetoOptional.isEmpty()){
-            throw new NaoEncontradoException("Não há nenhum projeto chamado " + nomeProjeto);
-        }
-        Projeto projeto = projetoOptional.get();
+    public BaseEntity pesquisar(String nomeProjeto, String nomeTime){
+
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
+
+        Projeto projeto = this.projetoService.capturarProjetoDaLista(projetos, nomeProjeto);
+
         if (nomeTime == null){
-            return projeto.getTimes();
+            return projeto;
         }
-        Optional<Time> time = this.timeRepository.findByNome(nomeTime);
-        if (time.isEmpty()){
-            throw new NaoEncontradoException("Não há nenhum time chamado " + nomeTime);
+        Optional<Time> timeOptional = projeto.getTimes().stream().filter(time -> time.getNome().equals(nomeTime)).findFirst();
+
+        if (timeOptional.isEmpty()){
+            throw new NaoEncontradoException("Não existe um time com o este nome.");
         }
-        return List.of(time.get());
+
+        return timeOptional.get();
     }
 
     public Time salvar(String nomeProjeto, String nomeTime){
 
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado(usuarioAutenticado);
+        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         Projeto projeto = this.projetoService.capturarProjetoDaLista(projetos, nomeProjeto);
 

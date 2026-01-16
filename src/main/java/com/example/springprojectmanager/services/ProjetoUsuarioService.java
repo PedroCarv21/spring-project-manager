@@ -5,12 +5,11 @@ import com.example.springprojectmanager.entities.ProjetoUsuario;
 import com.example.springprojectmanager.entities.Usuario;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
 import com.example.springprojectmanager.repositories.ProjetoUsuarioRepository;
+import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,15 +17,17 @@ public class ProjetoUsuarioService {
 
     private final ProjetoUsuarioRepository projetoUsuarioRepository;
     private final ProjetoRepository projetoRepository;
+    private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
 
-    public List<Projeto> listarProjetosDoUsuarioAutenticado(Usuario usuario){
-        List<ProjetoUsuario> projetoUsuarioList = listarPorUsuario(usuario);
+    public List<Projeto> listarProjetosDoUsuarioAutenticado(){
+        List<ProjetoUsuario> projetoUsuarioList = listarPorUsuario();
         return projetoUsuarioList.stream()
                 .map(ProjetoUsuario::getProjeto)
                 .toList();
     }
 
-    public List<ProjetoUsuario> listarPorUsuario(Usuario usuario){
-        return this.projetoUsuarioRepository.findByUsuario(usuario);
+    public List<ProjetoUsuario> listarPorUsuario(){
+        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        return this.projetoUsuarioRepository.findByUsuario(usuarioAutenticado);
     }
 }
