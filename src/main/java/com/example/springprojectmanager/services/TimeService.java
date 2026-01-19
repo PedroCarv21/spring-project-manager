@@ -29,22 +29,30 @@ public class TimeService {
     private final ProjetoUsuarioService projetoUsuarioService;
     private final TimeUsuarioService timeUsuarioService;
 
-    public BaseEntity pesquisar(String nomeProjeto, String nomeTime){
+    public List<Projeto> pesquisar(String nomeProjeto, String nomeTime){
 
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
-
-        Projeto projeto = this.projetoService.capturarProjetoDaLista(projetos, nomeProjeto);
+        List<Projeto> projetos = this.projetoService.pesquisar(nomeProjeto, null);
 
         if (nomeTime == null){
-            return projeto;
-        }
-        Optional<Time> timeOptional = projeto.getTimes().stream().filter(time -> time.getNome().equals(nomeTime)).findFirst();
-
-        if (timeOptional.isEmpty()){
-            throw new NaoEncontradoException("Não existe um time com o este nome.");
+            return projetos;
         }
 
-        return timeOptional.get();
+        for (Projeto projeto: projetos){
+            Optional<Time> timeOptional = projeto.getTimes().stream().filter(time -> time.getNome().equals(nomeTime)).findFirst();
+            if (timeOptional.isEmpty()){
+                projeto.setTimes(List.of());
+                continue;
+            }
+            Time time = timeOptional.get();
+            projeto.setTimes(List.of(time));
+        }
+
+        projetos = projetos.stream().filter(projeto -> !projeto.getTimes().isEmpty()).toList();
+
+        if (projetos.isEmpty()){
+            throw new NaoEncontradoException("Não existe nenhum projeto com um time chamado '" + nomeTime + "'.");
+        }
+        return projetos;
     }
 
     public Time salvar(String nomeProjeto, String nomeTime){
@@ -52,7 +60,7 @@ public class TimeService {
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
-        Projeto projeto = this.projetoService.capturarProjetoDaLista(projetos, nomeProjeto);
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
 
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
             throw new ConflitoException("Não é possível criar um time em um projeto que já foi " + projeto.getStatus().toString());

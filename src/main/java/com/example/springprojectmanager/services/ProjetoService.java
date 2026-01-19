@@ -46,11 +46,6 @@ public class ProjetoService {
 
     public Projeto atualizar(String nomeAtual, String novoNome, StatusProjeto statusProjeto){
 
-        /**
-         * novoNome ja pertence a um projeto?
-         * novoNovo é diferente de nomeAtual?
-         * projeto com novoNome tem role = ADMIN
-         */
         Projeto projetoCapturado = this.capturarProjeto(nomeAtual).get();
 
         if (novoNome != null && !novoNome.strip().equals("")) {
@@ -125,14 +120,6 @@ public class ProjetoService {
         projetoCapturado.setStatus(StatusProjeto.CANCELADO);
 //        atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
         this.projetoRepository.save(projetoCapturado);
-    }
-
-    protected Projeto capturarProjetoDaLista(List<Projeto> projetos, String nome){
-        return projetos
-                .stream()
-                .filter(projeto -> projeto.getNome().equals(nome))
-                .findFirst()
-                .get();
     }
 
     protected void atualizarStatusDosTimes(Projeto projeto, StatusTime statusTime){

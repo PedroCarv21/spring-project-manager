@@ -33,22 +33,17 @@ public class TimeController implements CriadorLocation{
     private final ProjetoRepository projetoRepository;
 
     @GetMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
-    public ResponseEntity<?> pesquisar(
+//    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
+    public ResponseEntity<List<ProjetoTimeReponseDTO>> pesquisar(
+            @NotBlank(message = "Informe o nome do projeto")
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
             @RequestParam(name = "nome_time", required = false)
             String nomeTime){
 
-        if (this.timeService.pesquisar(nomeProjeto, nomeTime).getClass().equals(Projeto.class)){
-            Projeto projeto = (Projeto) this.timeService.pesquisar(nomeProjeto, nomeTime);
-            ProjetoTimeReponseDTO projetoTimeResponseDTO = this.projetoMapper.toProjetoTimeResponseDTO(projeto);
-            return ResponseEntity.ok(projetoTimeResponseDTO);
-        }
-
-        Time time = (Time) this.timeService.pesquisar(nomeProjeto, nomeTime);
-        TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(time);
-        return ResponseEntity.ok(timeResponseDTO);
+        List<Projeto> projetos = this.timeService.pesquisar(nomeProjeto, nomeTime);
+        List<ProjetoTimeReponseDTO> projetoTimeReponseDTOList = projetos.stream().map(this.projetoMapper::toProjetoTimeResponseDTO).toList();
+        return ResponseEntity.ok(projetoTimeReponseDTOList);
     }
 
     @PostMapping
