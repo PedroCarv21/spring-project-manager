@@ -30,9 +30,11 @@ public class ProjetoService {
 
     public Projeto salvar(String nome){
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
-        boolean projetoComNomeJaExistente = projetos.stream().anyMatch(projeto -> projeto.getNome().equals(nome));
-        if (projetoComNomeJaExistente){
+        List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
+        boolean projetoComEsteNomeJaExiste = projetoUsuarioList
+                .stream()
+                .anyMatch(projetoUsuario -> projetoUsuario.getProjeto().getNome().equals(nome) && projetoUsuario.getRole().equals(Role.ADMIN));
+        if (projetoComEsteNomeJaExiste){
             throw new ConflitoException("Voce ja criou um projeto chamado " + nome);
         }
         Projeto projeto = new Projeto(nome, StatusProjeto.INICIADO);
@@ -44,25 +46,38 @@ public class ProjetoService {
 
     public Projeto atualizar(String nomeAtual, String novoNome, StatusProjeto statusProjeto){
 
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
+        /**
+         * novoNome ja pertence a um projeto?
+         * novoNovo é diferente de nomeAtual?
+         * projeto com novoNome tem role = ADMIN
+         */
+        Projeto projetoCapturado = this.capturarProjeto(nomeAtual).get();
 
-        if (novoNome != null) {
-            if (this.existeProjetoComEsteNome(projetos, novoNome) && !nomeAtual.equals(novoNome)) {
+        if (novoNome != null && !novoNome.strip().equals("")) {
+            List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
+            boolean existeProjetoComEsteNome = projetoUsuarioList
+                    .stream()
+                    .anyMatch(projetoUsuario -> projetoUsuario.getProjeto().getNome().equals(novoNome) && !nomeAtual.equals(novoNome) && projetoUsuario.getRole().equals(Role.ADMIN));
+            if (existeProjetoComEsteNome) {
                 throw new ConflitoException("Já existe um projeto com o nome " + novoNome + ".");
             }
-        }
-
-        Projeto projetoCapturado = this.capturarProjetoDaLista(projetos, nomeAtual);
-
-        if (novoNome != null){
             projetoCapturado.setNome(novoNome);
         }
+
         projetoCapturado.setStatus(statusProjeto);
         return this.projetoRepository.save(projetoCapturado);
     }
 
-    public boolean possuiAutorizacaoParaAtualizar(String nomeAtual){
+    public Optional<Projeto> capturarProjeto(String nome){
         List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
+        return projetoUsuarioList
+                .stream()
+                .filter(projetoUsuario -> projetoUsuario.getProjeto().getNome().equals(nome) && projetoUsuario.getRole().equals(Role.ADMIN))
+                .map(ProjetoUsuario::getProjeto)
+                .findFirst();
+    }
+
+    public boolean possuiAutorizacaoParaAtualizar(String nomeAtual){
         List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         boolean existeProjetoComEsteNome = this.existeProjetoComEsteNome(projetos, nomeAtual);
@@ -70,9 +85,8 @@ public class ProjetoService {
             throw new NaoEncontradoException("Não existe projeto com este nome");
         }
 
-        return projetoUsuarioList
-                .stream()
-                .anyMatch(projetoUsuario -> projetoUsuario.getProjeto().getNome().equals(nomeAtual) && projetoUsuario.getRole().equals(Role.ADMIN));
+        Optional<Projeto> projetoOptional = this.capturarProjeto(nomeAtual);
+        return projetoOptional.isPresent();
     }
 
     protected boolean existeProjetoComEsteNome(List<Projeto> projetos,  String nome){
@@ -103,9 +117,7 @@ public class ProjetoService {
 
     public void deletar(String nome){
 
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
-
-        Projeto projetoCapturado = this.capturarProjetoDaLista(projetos, nome);
+        Projeto projetoCapturado = this.capturarProjeto(nome).get();
 
         if (projetoCapturado.getStatus().equals(StatusProjeto.CANCELADO)){
             throw new ConflitoException("Esse projeto já foi cancelado.");
