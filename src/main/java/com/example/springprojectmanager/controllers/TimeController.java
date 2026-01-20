@@ -76,6 +76,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @DeleteMapping
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome_projeto")

@@ -78,24 +78,6 @@ public class TimeService {
         return timeSalvo;
     }
 
-    public void deletar(String nomeProjeto, String nomeTime){
-        Projeto projeto = this.projetoService.buscarPorNome(nomeProjeto);
-        List<Time> times = projeto.getTimes();
-        boolean timeExiste = times.stream().anyMatch(time -> time.getNome().equals(nomeTime));
-        if (!timeExiste){
-            throw new NaoEncontradoException("Não foi encontrado um time " + nomeTime + " dentro do projeto " + nomeProjeto);
-        }
-        times.forEach(time -> {
-            if (time.getNome().equals(nomeTime)){
-                if (time.getStatus().equals(StatusTime.ENCERRADO)){
-                    throw new ConflitoException("Esse time já foi encerrado.");
-                }
-                time.setStatus(StatusTime.ENCERRADO);
-                this.timeRepository.save(time);
-            }
-        });
-    }
-
     public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){
 
         Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
@@ -117,6 +99,21 @@ public class TimeService {
             time.setStatus(statusTime);
         }
         return this.timeRepository.save(time);
+    }
+
+    public void deletar(String nomeProjeto, String nomeTime){
+
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Optional<Time> timeOptional = this.capturarTime(projeto, nomeTime);
+        if (timeOptional.isEmpty()){
+            throw new NaoEncontradoException("Não foi encontrado um time " + nomeTime + " dentro do projeto " + nomeProjeto);
+        }
+        Time time = timeOptional.get();
+        if (time.getStatus().equals(StatusTime.ENCERRADO)){
+            throw new ConflitoException("Esse time já foi encerrado.");
+        }
+        time.setStatus(StatusTime.ENCERRADO);
+        this.timeRepository.save(time);
     }
 
     public Optional<Time> capturarTime(Projeto projeto, String nomeTime){
