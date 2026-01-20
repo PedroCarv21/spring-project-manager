@@ -1,6 +1,5 @@
 package com.example.springprojectmanager.services;
 
-import com.example.springprojectmanager.entities.BaseEntity;
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
 import com.example.springprojectmanager.entities.Usuario;
@@ -97,16 +96,31 @@ public class TimeService {
         });
     }
 
-    public Time atualizar(UUID id, String nome, StatusTime status){
-        Time time = this.buscarPorId(id);
+    public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){
 
-        if (time.getProjeto().getStatus().equals(StatusProjeto.CANCELADO) || time.getProjeto().getStatus().equals(StatusProjeto.CONCLUIDO)){
-            throw new ConflitoException("Não é possível atualizar um time que pertence a um projeto já " + time.getProjeto().getStatus());
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+
+        Optional<Time> timeOptional = this.capturarTime(projeto, nomeAtualTime);
+
+        if (timeOptional.isEmpty()){
+            throw new NaoEncontradoException("Não existe nenhum time '" + nomeAtualTime + "' dentro do projeto '" + nomeProjeto + "'.");
         }
-
-        time.setNome(nome);
-        time.setStatus(status);
+        Time time = timeOptional.get();
+        if (novoNomeTime != null && !novoNomeTime.strip().equals("")){
+            Optional<Time> timeComNovoNome = this.capturarTime(projeto, novoNomeTime);
+            if (timeComNovoNome.isPresent() && !nomeAtualTime.equals(novoNomeTime)){
+                throw new NaoEncontradoException("Já existe um time com o nome '" + novoNomeTime + "'.");
+            }
+            time.setNome(novoNomeTime);
+        }
+        if (statusTime != null){
+            time.setStatus(statusTime);
+        }
         return this.timeRepository.save(time);
+    }
+
+    public Optional<Time> capturarTime(Projeto projeto, String nomeTime){
+        return projeto.getTimes().stream().filter(time -> time.getNome().equals(nomeTime)).findFirst();
     }
 
     protected Time buscarPorId(UUID id){

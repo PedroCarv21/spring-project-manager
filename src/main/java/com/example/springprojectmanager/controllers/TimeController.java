@@ -60,14 +60,17 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.created(gerarLocation(timeSalvo.getId())).body(projetoTimeResponseDTO);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
     public ResponseEntity<TimeResponseDTO> atualizar(
-            @PathVariable("id") UUID id,
-            @NotBlank(message = "Informe um nome para o novo time.")
-            @RequestParam("nome") String nome,
-            @RequestParam("status") StatusTime status){
+            @NotBlank(message = "Informe o nome do projeto.")
+            @RequestParam("nome_projeto") String nomeProjeto,
+            @NotBlank(message = "Informe o nome atual do time.")
+            @RequestParam("nome_atual_time") String nomeAtualTime,
+            @RequestParam(value = "novo_nome_time", required = false) String novoNomeTime,
+            @RequestParam(value = "status", required = false) StatusTime status){
 
-        Time timeAtualizado = this.timeService.atualizar(id, nome, status);
+        Time timeAtualizado = this.timeService.atualizar(nomeProjeto, nomeAtualTime, novoNomeTime, status);
         TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(timeAtualizado);
         return ResponseEntity.ok(timeResponseDTO);
     }
