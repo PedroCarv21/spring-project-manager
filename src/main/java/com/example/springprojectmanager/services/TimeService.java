@@ -57,7 +57,6 @@ public class TimeService {
     public Time salvar(String nomeProjeto, String nomeTime){
 
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
 
@@ -81,6 +80,10 @@ public class TimeService {
     public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){
 
         Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+
+        if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
+            throw new ConflitoException("Não é possível atualizar um time em um projeto que já foi " + projeto.getStatus().toString());
+        }
 
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeAtualTime);
 

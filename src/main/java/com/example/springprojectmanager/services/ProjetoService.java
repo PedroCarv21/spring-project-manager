@@ -58,8 +58,15 @@ public class ProjetoService {
             }
             projetoCapturado.setNome(novoNome);
         }
-
-        projetoCapturado.setStatus(statusProjeto);
+        if (statusProjeto != null){
+            if (statusProjeto.equals(StatusProjeto.CONCLUIDO)){
+                this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
+            }
+            else if (projetoCapturado.getStatus().equals(StatusProjeto.CANCELADO) || projetoCapturado.getStatus().equals(StatusProjeto.CONCLUIDO)){
+                this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ATIVO);
+            }
+            projetoCapturado.setStatus(statusProjeto);
+        }
         return this.projetoRepository.save(projetoCapturado);
     }
 
@@ -119,6 +126,7 @@ public class ProjetoService {
         }
         projetoCapturado.setStatus(StatusProjeto.CANCELADO);
 //        atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
+        this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
         this.projetoRepository.save(projetoCapturado);
     }
 
