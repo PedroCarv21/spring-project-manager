@@ -1,5 +1,6 @@
 package com.example.springprojectmanager.security;
 
+import com.example.springprojectmanager.repositories.UsuarioRepository;
 import com.example.springprojectmanager.services.UsuarioService;
 import lombok.Builder;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +36,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public UserDetailsService criarUserDetailsService(UsuarioService usuarioService){
-        return new CustomUserDetailsService(usuarioService);
+    public UserDetailsService criarUserDetailsService(UsuarioRepository usuarioRepository){
+        return new CustomUserDetailsService(usuarioRepository);
     }
 }

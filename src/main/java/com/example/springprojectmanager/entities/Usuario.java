@@ -1,12 +1,9 @@
 package com.example.springprojectmanager.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import com.example.springprojectmanager.enums.StatusUsuario;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.util.List;
 
@@ -24,6 +21,9 @@ public class Usuario extends BaseEntity{
 
     @OneToMany(mappedBy = "usuario")
     private List<ProjetoUsuario> ProjetosRealacionados;
+
+    @Enumerated(EnumType.STRING)
+    private StatusUsuario status;
 
     public Usuario() {
     }
