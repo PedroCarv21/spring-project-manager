@@ -24,9 +24,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain criarSecurityFilterChain(HttpSecurity httpSecurity){
         return httpSecurity.
                 csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(Customizer.withDefaults())
+//                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/login", "/login/**", "/cadastro", "/cadastro/**", "/css/**", "/images/**").permitAll();
+                    auth.anyRequest().authenticated();
+                })
                 .formLogin(config -> config.loginPage("/login").permitAll())
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .build();
     }
 

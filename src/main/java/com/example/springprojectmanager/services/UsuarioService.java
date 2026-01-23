@@ -36,8 +36,12 @@ public class UsuarioService {
     }
 
     public Usuario salvar(Usuario usuario){
+        List<Usuario> usuarioList = this.usuarioRepository.findAll();
+        boolean existeUsuarioComEsteNome = usuarioList.stream().anyMatch(u -> u.getNome().equals(usuario.getNome()));
+        if (existeUsuarioComEsteNome){
+            throw new ConflitoException("Já existe um usuário com este nome");
+        }
         usuario.setSenha(this.passwordEncoder.encode(usuario.getSenha()));
-//        usuario.setSenha(this.criarEncoder().encode(usuario.getSenha()));
         return this.usuarioRepository.save(usuario);
     }
 

@@ -2,27 +2,16 @@
 <html lang="en" xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <style>
-        form{
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-        fieldset{
-            width: 400px;
-            text-align: center;
-        }
-    </style>
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+<!--        <link rel="stylesheet" href="../static/css/login.css">-->
 </head>
 <body>
     <form th:action="@{/login}" method="post">
-        <fieldset>
-            <legend>Login</legend>
-            <input type="text" name="username" placeholder="Nome do usuario"><br><br>
-            <input type="password" name="password" placeholder="Senha"><br><br>
+            <h1>Login</h1>
+            <input class="entrada" type="text" name="username" placeholder="Nome do usuario"><br><br>
+            <input class="entrada" type="password" name="password" placeholder="Senha"><br><br>
             <input type="submit">
-        </fieldset>
     </form>
 </body>
 </html>
