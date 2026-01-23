@@ -10,7 +10,8 @@
     <form method="post" th:action="@{/cadastro}" th:object="${usuario}">
             <h1>Cadastro</h1>
             <input class="entrada" type="text"  placeholder="Nome de usuário" th:field="*{nome}" required>
-            <input class="entrada" type="password"  placeholder="Senha" th:field="*{senha}" required minlength="6">
+            <input class="entrada" type="email"  placeholder="Email" th:field="*{email}" required>
+            <input class="entrada" type="password"  placeholder="Senha" th:field="*{senha}" required minlength="7">
             <input type="submit">
             <div id="bloco_erro">
                 <p th:if="${erroNegocio}" th:text="${erroNegocio}"></p>

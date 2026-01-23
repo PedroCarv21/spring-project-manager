@@ -8,6 +8,7 @@ import java.util.UUID;
 public record UsuarioResponseDTO(
         UUID id,
         String nome,
+        String email,
         String senha,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao,

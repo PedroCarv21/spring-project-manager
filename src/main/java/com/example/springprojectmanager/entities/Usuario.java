@@ -13,6 +13,9 @@ import java.util.List;
 @Setter
 public class Usuario extends BaseEntity{
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "senha")
     private String senha;
 
