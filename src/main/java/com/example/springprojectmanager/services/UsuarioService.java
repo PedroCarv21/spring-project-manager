@@ -1,7 +1,6 @@
 package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.Projeto;
-import com.example.springprojectmanager.entities.ProjetoUsuario;
 import com.example.springprojectmanager.entities.Usuario;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusUsuario;
@@ -51,19 +50,29 @@ public class UsuarioService {
         return this.usuarioRepository.save(usuario);
     }
 
-    public Usuario atualizar(String novoNome, String novaSenha){
+    public Usuario atualizar(String novoNome, String novoEmail, String novaSenha){
 
         List<Usuario> usuarioList = this.usuarioRepository.findAll();
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
 
         if (novoNome != null && !novoNome.strip().equals("")){
-            boolean existeUsuarioComEsteNome = usuarioList.stream().anyMatch(usuario -> usuario.getNome().equals(novoNome));
+            boolean existeUsuarioComEsteNome = this.usuarioRepository.findByNome(novoNome).isPresent();
 
             if (existeUsuarioComEsteNome && !usuarioAutenticado.getNome().equals(novoNome)){
                 throw new ConflitoException("Já existe um usuário com este nome.");
             }
             usuarioAutenticado.setNome(novoNome);
         }
+
+        if (novoEmail != null && !novoEmail.strip().equals("")){
+            boolean existeUsuarioComEsteEmail = this.usuarioRepository.findByEmail(novoEmail).isPresent();
+
+            if (existeUsuarioComEsteEmail && !usuarioAutenticado.getEmail().equals(novoEmail)){
+                throw new ConflitoException("Este e-mail já está cadastrado.");
+            }
+            usuarioAutenticado.setEmail(novoEmail);
+        }
+
         if (novaSenha != null && !novaSenha.strip().equals("")){
 
             usuarioAutenticado.setSenha(passwordEncoder.encode(novaSenha));
@@ -87,24 +96,16 @@ public class UsuarioService {
 
     public void deletar(){
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        if (usuarioAutenticado.getStatus().equals(StatusUsuario.DESATIVADO)){
-            throw new ConflitoException("Esse usuário já está com a conta desativada");
-        }
         usuarioAutenticado.setStatus(StatusUsuario.DESATIVADO);
-        List<Projeto> projetoList = usuarioAutenticado.getProjetosRealacionados().stream().map(ProjetoUsuario::getProjeto).toList();
-        if (!projetoList.isEmpty()){
-            projetoList.forEach(projeto -> this.projetoService.deletar(projeto.getNome()));
-        }
+        this.usuarioRepository.save(usuarioAutenticado);
     }
 
     @Transactional
-    public void reativarUsuarioEProjetos(String username){
+    public void reativarUsuario(String username){
         Usuario usuarioAutenticado = this.usuarioRepository.findByNome(username).get();
         if (usuarioAutenticado.getStatus().equals(StatusUsuario.DESATIVADO)){
             usuarioAutenticado.setStatus(StatusUsuario.ATIVO);
             this.usuarioRepository.save(usuarioAutenticado);
-            List<Projeto> projetos = this.projetoService.pesquisar(null, null);
-            projetos.forEach(projeto -> this.projetoService.atualizar(projeto.getNome(), null, StatusProjeto.INICIADO));
         }
     }
 }

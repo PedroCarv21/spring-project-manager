@@ -22,7 +22,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        this.usuarioService.reativarUsuarioEProjetos(userDetails.getUsername());
+        this.usuarioService.reativarUsuario(userDetails.getUsername());
         response.sendRedirect("/");
     }
 }

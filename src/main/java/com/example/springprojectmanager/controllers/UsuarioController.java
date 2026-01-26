@@ -7,6 +7,7 @@ import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import com.example.springprojectmanager.services.UsuarioService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -48,12 +49,15 @@ public class UsuarioController implements CriadorLocation{
     public ResponseEntity<UsuarioResponseDTO> atualizar(
             @RequestParam(name = "nome", required = false)
             String novoNome,
-            @Size(min = 7, message = "A senha deve ter no mín. 7 caracteres")
+            @Email(message = "Informe um e-mail válido.")
+            @RequestParam(name = "email", required = false)
+            String novoEmail,
+            @Size(min = 7, message = "A senha deve ter no mín. 7 caracteres.")
             @RequestParam(name = "senha", required = false)
             @Parameter(schema = @Schema(type = "string", format = "password"))
             String novaSenha
     ){
-        Usuario usuario = this.usuarioService.atualizar(novoNome, novaSenha);
+        Usuario usuario = this.usuarioService.atualizar(novoNome, novoEmail, novaSenha);
         UsuarioResponseDTO usuarioResponseDTO = this.usuarioMapper.toDTO(usuario);
         return ResponseEntity.ok(usuarioResponseDTO);
     }
