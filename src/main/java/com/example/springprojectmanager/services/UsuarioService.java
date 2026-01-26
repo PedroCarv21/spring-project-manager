@@ -1,6 +1,10 @@
 package com.example.springprojectmanager.services;
 
+import com.example.springprojectmanager.entities.Projeto;
+import com.example.springprojectmanager.entities.ProjetoUsuario;
 import com.example.springprojectmanager.entities.Usuario;
+import com.example.springprojectmanager.enums.StatusProjeto;
+import com.example.springprojectmanager.enums.StatusUsuario;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.UsuarioRepository;
@@ -13,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +30,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
     private final UserDetailsService userDetailsService;
+    private final ProjetoService projetoService;
 
     public Usuario buscarPorNome(String nome){
         Optional<Usuario> usuarioOptional = this.usuarioRepository.findByNome(nome);
@@ -77,5 +83,28 @@ public class UsuarioService {
 
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         return usuarioSalvo;
+    }
+
+    public void deletar(){
+        Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        if (usuarioAutenticado.getStatus().equals(StatusUsuario.DESATIVADO)){
+            throw new ConflitoException("Esse usuário já está com a conta desativada");
+        }
+        usuarioAutenticado.setStatus(StatusUsuario.DESATIVADO);
+        List<Projeto> projetoList = usuarioAutenticado.getProjetosRealacionados().stream().map(ProjetoUsuario::getProjeto).toList();
+        if (!projetoList.isEmpty()){
+            projetoList.forEach(projeto -> this.projetoService.deletar(projeto.getNome()));
+        }
+    }
+
+    @Transactional
+    public void reativarUsuarioEProjetos(String username){
+        Usuario usuarioAutenticado = this.usuarioRepository.findByNome(username).get();
+        if (usuarioAutenticado.getStatus().equals(StatusUsuario.DESATIVADO)){
+            usuarioAutenticado.setStatus(StatusUsuario.ATIVO);
+            this.usuarioRepository.save(usuarioAutenticado);
+            List<Projeto> projetos = this.projetoService.pesquisar(null, null);
+            projetos.forEach(projeto -> this.projetoService.atualizar(projeto.getNome(), null, StatusProjeto.INICIADO));
+        }
     }
 }

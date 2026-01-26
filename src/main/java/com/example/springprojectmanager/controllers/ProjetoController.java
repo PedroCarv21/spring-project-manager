@@ -5,17 +5,16 @@ import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusProjetoAtualizacao;
 import com.example.springprojectmanager.mappers.ProjetoMapper;
+import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import com.example.springprojectmanager.services.ProjetoService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("projetos/")
@@ -25,8 +24,10 @@ public class ProjetoController implements CriadorLocation{
 
     private final ProjetoService projetoService;
     private final ProjetoMapper projetoMapper;
+    private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
 
     @PostMapping
+    @PreAuthorize("@fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<ProjetoResponseDTO> salvar(
             @RequestParam(value = "nome")
             @NotBlank(message = "Informe algum nome para o seu projeto.")
@@ -37,7 +38,7 @@ public class ProjetoController implements CriadorLocation{
     }
 
     @PutMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeAtual)")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeAtual) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<ProjetoResponseDTO> atualizar(
             @NotBlank(message = "Informe nome atual do seu projeto.")
             @RequestParam(value = "nome_atual")
@@ -66,7 +67,7 @@ public class ProjetoController implements CriadorLocation{
     }
 
     @DeleteMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nome)")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nome) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome") String nome){

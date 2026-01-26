@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,10 +44,11 @@ public class UsuarioController implements CriadorLocation{
     }
 
     @PutMapping
+    @PreAuthorize("@fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<UsuarioResponseDTO> atualizar(
             @RequestParam(name = "nome", required = false)
             String novoNome,
-            @Size(min = 6, message = "A senha deve ter no mín. 6 caracteres")
+            @Size(min = 7, message = "A senha deve ter no mín. 7 caracteres")
             @RequestParam(name = "senha", required = false)
             @Parameter(schema = @Schema(type = "string", format = "password"))
             String novaSenha
@@ -54,5 +56,12 @@ public class UsuarioController implements CriadorLocation{
         Usuario usuario = this.usuarioService.atualizar(novoNome, novaSenha);
         UsuarioResponseDTO usuarioResponseDTO = this.usuarioMapper.toDTO(usuario);
         return ResponseEntity.ok(usuarioResponseDTO);
+    }
+
+    @DeleteMapping
+    @PreAuthorize("@fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<Void> deletar(){
+        this.usuarioService.deletar();
+        return ResponseEntity.noContent().build();
     }
 }

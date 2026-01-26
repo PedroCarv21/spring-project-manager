@@ -1,6 +1,7 @@
 package com.example.springprojectmanager.security;
 
 import com.example.springprojectmanager.entities.Usuario;
+import com.example.springprojectmanager.enums.StatusUsuario;
 import com.example.springprojectmanager.repositories.UsuarioRepository;
 import com.example.springprojectmanager.services.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -19,5 +20,10 @@ public class FornecedorUsuarioAutenticado {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return this.usuarioRepository.findByNome(userDetails.getUsername()).get();
+    }
+
+    public boolean permaneceComContaAtiva(){
+        Usuario usuarioAutenticado = this.fornecerUsuarioAutenticado();
+        return usuarioAutenticado.getStatus().equals(StatusUsuario.ATIVO);
     }
 }
