@@ -2,12 +2,16 @@ package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
+import com.example.springprojectmanager.entities.TimeUsuario;
 import com.example.springprojectmanager.entities.Usuario;
+import com.example.springprojectmanager.entities.chavesprimariascompostas.TimeUsuarioId;
+import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusTime;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
+import com.example.springprojectmanager.repositories.ProjetoUsuarioRepository;
 import com.example.springprojectmanager.repositories.TimeRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +29,10 @@ public class TimeService {
     private final ProjetoRepository projetoRepository;
     private final ProjetoService projetoService;
     private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
+    private final ProjetoUsuarioRepository projetoUsuarioRepository;
     private final ProjetoUsuarioService projetoUsuarioService;
     private final TimeUsuarioService timeUsuarioService;
+    private final UsuarioService usuarioService;
 
     public List<Projeto> pesquisar(String nomeProjeto, String nomeTime){
 
@@ -75,6 +81,19 @@ public class TimeService {
         this.timeUsuarioService.salvar(timeSalvo, usuarioAutenticado);
         timeSalvo.getProjeto().getTimes().add(timeSalvo);
         return timeSalvo;
+    }
+
+    public Time adicionarUsuario(String nomeProjeto, String nomeTime, String username, Role role){
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        boolean usuarioFazParteDoProjeto = this.projetoUsuarioRepository.existsByProjetoAndUsuario(projeto, usuario);
+        if (usuarioFazParteDoProjeto){
+            throw new ConflitoException("O usuário já faz parte deste projeto");
+        }
+        this.projetoUsuarioService.salvar(projeto, usuario, role);
+        this.timeUsuarioService.salvar(time, usuario);
+        return time;
     }
 
     public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){

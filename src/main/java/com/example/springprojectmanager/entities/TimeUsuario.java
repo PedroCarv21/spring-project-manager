@@ -2,9 +2,13 @@ package com.example.springprojectmanager.entities;
 
 import com.example.springprojectmanager.entities.chavesprimariascompostas.TimeUsuarioId;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "time_usuario")
+@Getter
+@Setter
 public class TimeUsuario {
 
     @EmbeddedId

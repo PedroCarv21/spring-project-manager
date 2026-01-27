@@ -48,4 +48,6 @@ public class Usuario extends BaseEntity{
                 ", dataAtualizacao=" + dataAtualizacao +
                 '}';
     }
+
+
 }

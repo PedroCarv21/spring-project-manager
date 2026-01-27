@@ -11,4 +11,6 @@ import java.util.List;
 public interface ProjetoUsuarioRepository extends JpaRepository<ProjetoUsuario, ProjetoUsuarioId> {
 
     List<ProjetoUsuario> findByUsuario(Usuario usuario);
+
+    boolean existsByProjetoAndUsuario(Projeto projeto, Usuario usuario);
 }
