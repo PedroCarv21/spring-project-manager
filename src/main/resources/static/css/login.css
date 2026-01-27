@@ -51,3 +51,21 @@ input[type="submit"]{
 input[type="submit"]:hover{
     background-color: black;
 }
+
+div{
+    padding: 10px;
+}
+
+span{
+    font-family: sans-serif;
+    color: white;
+}
+
+a{
+    color:  #00e64d;
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: underline;
+}
