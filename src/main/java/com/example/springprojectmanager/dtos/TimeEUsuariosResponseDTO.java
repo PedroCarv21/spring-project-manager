@@ -11,5 +11,5 @@ public record TimeEUsuariosResponseDTO(
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao,
         String nomeProjeto,
-        List<UsuarioResponseDTO> usuarioResponseDTOList) {
+        List<UsuarioRoleResponseDTO> usuarioRoleResponseDTOList) {
 }

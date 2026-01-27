@@ -38,6 +38,10 @@ public class ProjetoUsuarioService {
         return this.projetoUsuarioRepository.save(projetoUsuario);
     }
 
+    public ProjetoUsuario salvar(ProjetoUsuario projetoUsuario){
+        return this.projetoUsuarioRepository.save(projetoUsuario);
+    }
+
     public ProjetoUsuario buscarProjetoUsuario(Projeto projeto, Usuario usuario){
         return this.projetoUsuarioRepository
                 .findByProjetoAndUsuario(projeto, usuario)

@@ -1,7 +1,6 @@
 package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.*;
-import com.example.springprojectmanager.entities.chavesprimariascompostas.TimeUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
 import com.example.springprojectmanager.enums.StatusTime;
@@ -82,7 +81,7 @@ public class TimeService {
         return timeSalvo;
     }
 
-    public Time adicionarUsuario(String nomeProjeto, String nomeTime, String username, Role role){
+    public Time adicionarParticipante(String nomeProjeto, String nomeTime, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
         Usuario usuario = this.usuarioService.buscarPorNome(username);
@@ -120,6 +119,29 @@ public class TimeService {
             time.setStatus(statusTime);
         }
         return this.timeRepository.save(time);
+    }
+
+    public Time atualizarRoleParticipante(String nomeProjeto, String username, Role role){
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+        if (projetoUsuario.getRole().equals(Role.ADMIN)){
+            throw new ConflitoException("O administrador não pode mudar a sua ROLE");
+        }
+        projetoUsuario.setRole(role);
+        this.projetoUsuarioService.salvar(projetoUsuario);
+        List<Time> times = projeto.getTimes();
+        for (Time time: times){
+            Optional<Usuario> usuarioOptional = timeUsuarioService
+                    .buscarUsuariosDoTime(time)
+                    .stream()
+                    .filter(u -> u.getNome().equals(username))
+                    .findFirst();
+            if (usuarioOptional.isPresent()){
+                return time;
+            }
+        }
+        return null;
     }
 
     public void deletar(String nomeProjeto, String nomeTime){

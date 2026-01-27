@@ -3,6 +3,7 @@ package com.example.springprojectmanager.controllers;
 import com.example.springprojectmanager.dtos.ProjetoTimeReponseDTO;
 import com.example.springprojectmanager.dtos.TimeEUsuariosResponseDTO;
 import com.example.springprojectmanager.dtos.TimeResponseDTO;
+import com.example.springprojectmanager.dtos.UsuarioRoleResponseDTO;
 import com.example.springprojectmanager.entities.Projeto;
 import com.example.springprojectmanager.entities.Time;
 import com.example.springprojectmanager.enums.Role;
@@ -23,7 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/times")
@@ -82,9 +82,39 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.ok(timeResponseDTO);
     }
 
-    @PostMapping("/adicionar_usuario")
+    @PutMapping("atualizar_participante")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
-    public ResponseEntity<TimeEUsuariosResponseDTO> adicionarUsuario(
+    public ResponseEntity<TimeEUsuariosResponseDTO> atualizarParticipante(
+            @RequestParam(name = "nome_projeto")
+            String nomeProjeto,
+            @RequestParam(name = "nome_usuario")
+            String username,
+            @RequestParam(name = "role")
+            RoleParticipante roleParticipante){
+        Role role = this.usuarioMapper.toRole(roleParticipante);
+        Time time = this.timeService.atualizarRoleParticipante(nomeProjeto, username, role);
+        TimeEUsuariosResponseDTO timeEUsuariosResponseDTO = this.timeMapper.toTimeEUsuariosResponseDTO(time);
+
+        List<UsuarioRoleResponseDTO> usuarioRoleResponseDTOList = timeEUsuariosResponseDTO
+                .usuarioRoleResponseDTOList()
+                .stream()
+                .filter(usuarioRoleResponseDTO -> usuarioRoleResponseDTO.nome().equals(username))
+                .toList();
+
+        TimeEUsuariosResponseDTO timeEUsuariosResponseDTOAtualizado = new TimeEUsuariosResponseDTO(
+                timeEUsuariosResponseDTO.nome(),
+                timeEUsuariosResponseDTO.status(),
+                timeEUsuariosResponseDTO.dataCriacao(),
+                timeEUsuariosResponseDTO.dataAtualizacao(),
+                timeEUsuariosResponseDTO.nomeProjeto(),
+                usuarioRoleResponseDTOList
+        );
+        return ResponseEntity.ok(timeEUsuariosResponseDTOAtualizado);
+    }
+
+    @PostMapping("/adicionar_participante")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<TimeEUsuariosResponseDTO> adicionarParticipante(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
             @RequestParam(name = "nome_time")
@@ -95,7 +125,7 @@ public class TimeController implements CriadorLocation{
             RoleParticipante roleParticipante){
 
         Role role = this.usuarioMapper.toRole(roleParticipante);
-        Time time = this.timeService.adicionarUsuario(nomeProjeto, nomeTime, username, role);
+        Time time = this.timeService.adicionarParticipante(nomeProjeto, nomeTime, username, role);
         TimeEUsuariosResponseDTO timeEUsuariosResponseDTO = this.timeMapper.toTimeEUsuariosResponseDTO(time);
         return ResponseEntity.ok(timeEUsuariosResponseDTO);
     }
@@ -113,7 +143,7 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/excluir_usuario")
+    @DeleteMapping("/excluir_participante")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> excluirUsuario(
             @RequestParam(name = "nome_projeto")

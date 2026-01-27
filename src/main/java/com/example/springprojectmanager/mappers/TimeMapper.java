@@ -21,8 +21,8 @@ public abstract class TimeMapper {
     public abstract TimeResponseDTO toDTO(Time time);
 
     @Mappings ({
-        @Mapping(target = "usuarioResponseDTOList", expression = "java(this.timeUsuarioService.buscarUsuariosDoTime(time).stream().map(usuario -> usuarioMapper.toDTO(usuario)).toList() )"),
-        @Mapping(target = "nomeProjeto", expression = "java( time.getProjeto().getNome() )")
+        @Mapping(target = "usuarioRoleResponseDTOList", expression = "java(this.timeUsuarioService.buscarUsuariosDoTime(time).stream().map(usuario -> usuarioMapper.toUsuarioRoleResponseDTO(usuario, time.getProjeto())).toList() )"),
+        @Mapping(target = "nomeProjeto", expression = "java( time.getProjeto().getNome() )"),
     })
     public abstract TimeEUsuariosResponseDTO toTimeEUsuariosResponseDTO(Time time);
 }
