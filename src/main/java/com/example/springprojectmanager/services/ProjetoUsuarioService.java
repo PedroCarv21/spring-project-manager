@@ -1,11 +1,10 @@
 package com.example.springprojectmanager.services;
 
-import com.example.springprojectmanager.entities.Projeto;
-import com.example.springprojectmanager.entities.ProjetoUsuario;
-import com.example.springprojectmanager.entities.Usuario;
+import com.example.springprojectmanager.entities.*;
 import com.example.springprojectmanager.entities.chavesprimariascompostas.ProjetoUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
+import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
 import com.example.springprojectmanager.repositories.ProjetoUsuarioRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
@@ -37,5 +36,16 @@ public class ProjetoUsuarioService {
     public ProjetoUsuario salvar(Projeto projeto, Usuario usuario, Role role){
         ProjetoUsuario projetoUsuario = new ProjetoUsuario(new ProjetoUsuarioId(), projeto, usuario, role);
         return this.projetoUsuarioRepository.save(projetoUsuario);
+    }
+
+    public ProjetoUsuario buscarProjetoUsuario(Projeto projeto, Usuario usuario){
+        return this.projetoUsuarioRepository
+                .findByProjetoAndUsuario(projeto, usuario)
+                .orElseThrow(() -> new NaoEncontradoException("Usuário " + usuario.getNome() + " não pertence a este projeto."));
+    }
+
+    public void deletarProjetoUsuario(Projeto projeto, Usuario usuario){
+        ProjetoUsuario projetoUsuario = this.buscarProjetoUsuario(projeto, usuario);
+        this.projetoUsuarioRepository.delete(projetoUsuario);
     }
 }

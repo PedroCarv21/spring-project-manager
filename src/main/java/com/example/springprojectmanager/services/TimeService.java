@@ -1,9 +1,6 @@
 package com.example.springprojectmanager.services;
 
-import com.example.springprojectmanager.entities.Projeto;
-import com.example.springprojectmanager.entities.Time;
-import com.example.springprojectmanager.entities.TimeUsuario;
-import com.example.springprojectmanager.entities.Usuario;
+import com.example.springprojectmanager.entities.*;
 import com.example.springprojectmanager.entities.chavesprimariascompostas.TimeUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
@@ -13,6 +10,7 @@ import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
 import com.example.springprojectmanager.repositories.ProjetoUsuarioRepository;
 import com.example.springprojectmanager.repositories.TimeRepository;
+import com.example.springprojectmanager.repositories.TimeUsuarioRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +30,7 @@ public class TimeService {
     private final ProjetoUsuarioRepository projetoUsuarioRepository;
     private final ProjetoUsuarioService projetoUsuarioService;
     private final TimeUsuarioService timeUsuarioService;
+    private final TimeUsuarioRepository timeUsuarioRepository;
     private final UsuarioService usuarioService;
 
     public List<Projeto> pesquisar(String nomeProjeto, String nomeTime){
@@ -87,8 +86,8 @@ public class TimeService {
         Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
         Usuario usuario = this.usuarioService.buscarPorNome(username);
-        boolean usuarioFazParteDoProjeto = this.projetoUsuarioRepository.existsByProjetoAndUsuario(projeto, usuario);
-        if (usuarioFazParteDoProjeto){
+        Optional<ProjetoUsuario> projetoUsuarioOptional = this.projetoUsuarioRepository.findByProjetoAndUsuario(projeto, usuario);
+        if (projetoUsuarioOptional.isPresent()){
             throw new ConflitoException("O usuário já faz parte deste projeto");
         }
         this.projetoUsuarioService.salvar(projeto, usuario, role);
@@ -148,5 +147,20 @@ public class TimeService {
             throw new NaoEncontradoException("Nao foi encontrado um time com este ID");
         }
         return timeOptional.get();
+    }
+
+    public void excluirUsuario(String nomeProjeto, String nomeTime, String username){
+        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+
+        if (projetoUsuario.getRole().equals(Role.ADMIN)){
+            throw new ConflitoException("Administrador não pode ser deletado do próprio projeto");
+
+        }
+
+        Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new ConflitoException("Time não encontrado"));
+        this.timeUsuarioService.deletarTimeUsuario(time, usuario);
+        this.projetoUsuarioService.deletarProjetoUsuario(projeto, usuario);
     }
 }

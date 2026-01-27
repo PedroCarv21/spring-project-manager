@@ -7,10 +7,11 @@ import com.example.springprojectmanager.entities.chavesprimariascompostas.Projet
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProjetoUsuarioRepository extends JpaRepository<ProjetoUsuario, ProjetoUsuarioId> {
 
     List<ProjetoUsuario> findByUsuario(Usuario usuario);
 
-    boolean existsByProjetoAndUsuario(Projeto projeto, Usuario usuario);
+    Optional<ProjetoUsuario> findByProjetoAndUsuario(Projeto projeto, Usuario usuario);
 }

@@ -82,14 +82,14 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.ok(timeResponseDTO);
     }
 
-    @PostMapping("/novosparticipantes")
+    @PostMapping("/adicionar_usuario")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TimeEUsuariosResponseDTO> adicionarUsuario(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
             @RequestParam(name = "nome_time")
             String nomeTime,
-            @RequestParam(name = "username")
+            @RequestParam(name = "nome_usuario")
             String username,
             @RequestParam(name = "role")
             RoleParticipante roleParticipante){
@@ -113,5 +113,18 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/excluir_usuario")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<Void> excluirUsuario(
+            @RequestParam(name = "nome_projeto")
+            String nomeProjeto,
+            @RequestParam(name = "nome_time")
+            String nomeTime,
+            @RequestParam(name = "nome_usuario")
+            String username){
+
+        this.timeService.excluirUsuario(nomeProjeto, nomeTime, username);
+        return ResponseEntity.noContent().build();
+    }
 
 }

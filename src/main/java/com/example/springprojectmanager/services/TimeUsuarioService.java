@@ -4,6 +4,7 @@ import com.example.springprojectmanager.entities.Time;
 import com.example.springprojectmanager.entities.TimeUsuario;
 import com.example.springprojectmanager.entities.Usuario;
 import com.example.springprojectmanager.entities.chavesprimariascompostas.TimeUsuarioId;
+import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.TimeUsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,17 @@ public class TimeUsuarioService {
     public List<Usuario> buscarUsuariosDoTime(Time time){
         List<TimeUsuario> timeUsuarioList = this.timeUsuarioRepository.findByTime(time);
         return timeUsuarioList.stream().map(TimeUsuario::getUsuario).toList();
+    }
+
+    public TimeUsuario buscarTimeUsuario(Time time, Usuario usuario){
+        return this.timeUsuarioRepository
+                .findByTimeAndUsuario(time, usuario)
+                .orElseThrow(() -> new NaoEncontradoException("Não foi encontrado um usuário '" + usuario.getNome() + "' no time '" + time.getNome() + "'."));
+    }
+
+    public void deletarTimeUsuario(Time time, Usuario usuario){
+        TimeUsuario timeUsuario = this.buscarTimeUsuario(time, usuario);
+        this.timeUsuarioRepository.delete(timeUsuario);
     }
 
 //    public List<TimeUsuario> buscarTodos(){
