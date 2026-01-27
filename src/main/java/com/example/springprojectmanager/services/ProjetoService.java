@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Service
@@ -46,7 +47,7 @@ public class ProjetoService {
 
     public Projeto atualizar(String nomeAtual, String novoNome, StatusProjeto statusProjeto){
 
-        Projeto projetoCapturado = this.capturarProjeto(nomeAtual).get();
+        Projeto projetoCapturado = this.capturarProjetoAdministradoPorVoce(nomeAtual).get();
 
         if (novoNome != null && !novoNome.strip().equals("")) {
             List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
@@ -70,13 +71,19 @@ public class ProjetoService {
         return this.projetoRepository.save(projetoCapturado);
     }
 
-    public Optional<Projeto> capturarProjeto(String nome){
+    public Optional<Projeto> capturarProjetoAdministradoPorVoce(String nome){
         List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
         return projetoUsuarioList
                 .stream()
                 .filter(projetoUsuario -> projetoUsuario.getProjeto().getNome().equals(nome) && projetoUsuario.getRole().equals(Role.ADMIN))
                 .map(ProjetoUsuario::getProjeto)
                 .findFirst();
+    }
+
+    public Projeto capturarProjetoPorId(UUID id){
+        return this.projetoRepository
+                .findById(id)
+                .orElseThrow(() -> new NaoEncontradoException("Projeto não encontrado"));
     }
 
     public boolean possuiAutorizacaoParaAtualizar(String nomeAtual){
@@ -87,8 +94,15 @@ public class ProjetoService {
             throw new NaoEncontradoException("Não existe projeto com este nome");
         }
 
-        Optional<Projeto> projetoOptional = this.capturarProjeto(nomeAtual);
+        Optional<Projeto> projetoOptional = this.capturarProjetoAdministradoPorVoce(nomeAtual);
         return projetoOptional.isPresent();
+    }
+
+    public boolean possuiAutorizacaoParaSolicitar(UUID id){
+        Projeto projeto = this.capturarProjetoPorId(id);
+        Usuario usuario = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+        return projetoUsuario.getRole().equals(Role.ADMIN) || projetoUsuario.getRole().equals(Role.MANAGER);
     }
 
     protected boolean existeProjetoComEsteNome(List<Projeto> projetos,  String nome){
@@ -119,7 +133,7 @@ public class ProjetoService {
 
     public void deletar(String nome){
 
-        Projeto projetoCapturado = this.capturarProjeto(nome).get();
+        Projeto projetoCapturado = this.capturarProjetoAdministradoPorVoce(nome).get();
 
         if (projetoCapturado.getStatus().equals(StatusProjeto.CANCELADO)){
             throw new ConflitoException("Esse projeto já foi cancelado.");

@@ -21,6 +21,9 @@ public class Projeto extends BaseEntity{
     private List<Time> times;
 
     @OneToMany(mappedBy = "projeto")
+    private List<Tarefa> tarefas;
+
+    @OneToMany(mappedBy = "projeto")
     private List<ProjetoUsuario> UsuariosRelacionados;
 
     public Projeto(){

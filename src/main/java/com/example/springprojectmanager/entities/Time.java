@@ -22,6 +22,9 @@ public class Time extends BaseEntity{
     private Projeto projeto;
 
     @OneToMany(mappedBy = "time")
+    private List<Tarefa> tarefas;
+
+    @OneToMany(mappedBy = "time")
     private List<TimeUsuario> usuariosRelacionados;
 
     public Time() {

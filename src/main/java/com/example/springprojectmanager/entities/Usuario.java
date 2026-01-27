@@ -19,11 +19,15 @@ public class Usuario extends BaseEntity{
     @Column(name = "senha")
     private String senha;
 
+
     @OneToMany(mappedBy = "usuario")
     private List<TimeUsuario> timesRelacionados;
 
     @OneToMany(mappedBy = "usuario")
     private List<ProjetoUsuario> ProjetosRealacionados;
+
+    @OneToMany(mappedBy = "usuario")
+    private List<TarefaUsuario> tarefasRelacionadas;
 
     @Enumerated(EnumType.STRING)
     private StatusUsuario status;

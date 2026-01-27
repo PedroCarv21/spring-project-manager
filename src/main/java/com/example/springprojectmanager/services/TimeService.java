@@ -62,7 +62,7 @@ public class TimeService {
 
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
 
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
             throw new ConflitoException("Não é possível criar um time em um projeto que já foi " + projeto.getStatus().toString());
@@ -82,7 +82,7 @@ public class TimeService {
     }
 
     public Time adicionarParticipante(String nomeProjeto, String nomeTime, String username, Role role){
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Optional<ProjetoUsuario> projetoUsuarioOptional = this.projetoUsuarioRepository.findByProjetoAndUsuario(projeto, usuario);
@@ -96,7 +96,7 @@ public class TimeService {
 
     public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){
 
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
             throw new ConflitoException("Não é possível atualizar um time em um projeto que já foi " + projeto.getStatus().toString());
@@ -122,7 +122,7 @@ public class TimeService {
     }
 
     public Time atualizarRoleParticipante(String nomeProjeto, String username, Role role){
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
         if (projetoUsuario.getRole().equals(Role.ADMIN)){
@@ -146,7 +146,7 @@ public class TimeService {
 
     public void deletar(String nomeProjeto, String nomeTime){
 
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeTime);
         if (timeOptional.isEmpty()){
             throw new NaoEncontradoException("Não foi encontrado um time " + nomeTime + " dentro do projeto " + nomeProjeto);
@@ -172,7 +172,7 @@ public class TimeService {
     }
 
     public void excluirUsuario(String nomeProjeto, String nomeTime, String username){
-        Projeto projeto = this.projetoService.capturarProjeto(nomeProjeto).get();
+        Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
 
