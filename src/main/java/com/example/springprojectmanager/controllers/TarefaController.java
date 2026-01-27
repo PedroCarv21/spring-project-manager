@@ -3,9 +3,12 @@ package com.example.springprojectmanager.controllers;
 import com.example.springprojectmanager.dtos.TarefaResponseDTO;
 import com.example.springprojectmanager.entities.Tarefa;
 import com.example.springprojectmanager.mappers.TarefaMapper;
+import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
+import com.example.springprojectmanager.services.ProjetoService;
 import com.example.springprojectmanager.services.TarefaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,8 +23,11 @@ public class TarefaController {
 
     private final TarefaService tarefaService;
     private final TarefaMapper tarefaMapper;
+    private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
+    private final ProjetoService projetoService;
 
     @PostMapping
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaResponseDTO> salvar(
             @RequestParam(name = "id")
             UUID id,
