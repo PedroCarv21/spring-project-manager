@@ -60,8 +60,6 @@ public class TimeService {
 
     public Time salvar(String nomeProjeto, String nomeTime){
 
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
@@ -76,7 +74,6 @@ public class TimeService {
 
         Time time = new Time(nomeTime, projeto, StatusTime.ATIVO);
         Time timeSalvo = this.timeRepository.save(time);
-        this.timeUsuarioService.salvar(timeSalvo, usuarioAutenticado);
         timeSalvo.getProjeto().getTimes().add(timeSalvo);
         return timeSalvo;
     }

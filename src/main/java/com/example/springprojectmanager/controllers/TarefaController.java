@@ -2,6 +2,7 @@ package com.example.springprojectmanager.controllers;
 
 import com.example.springprojectmanager.dtos.TarefaResponseDTO;
 import com.example.springprojectmanager.entities.Tarefa;
+import com.example.springprojectmanager.enums.StatusTarefa;
 import com.example.springprojectmanager.mappers.TarefaMapper;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import com.example.springprojectmanager.services.ProjetoService;
@@ -9,10 +10,7 @@ import com.example.springprojectmanager.services.TarefaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -23,13 +21,11 @@ public class TarefaController {
 
     private final TarefaService tarefaService;
     private final TarefaMapper tarefaMapper;
-    private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
-    private final ProjetoService projetoService;
 
-    @PostMapping
+    @PostMapping("/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaResponseDTO> salvar(
-            @RequestParam(name = "id")
+            @PathVariable("id")
             UUID id,
             @RequestParam(name = "nome_time", required = false)
             String nomeTime,
@@ -38,6 +34,27 @@ public class TarefaController {
             @RequestParam(name = "descricao")
             String descricao){
         Tarefa tarefa = this.tarefaService.salvar(id, nomeTime, nomeTarefa, descricao);
+        TarefaResponseDTO tarefaResponseDTO = this.tarefaMapper.toDTO(tarefa);
+        return ResponseEntity.ok(tarefaResponseDTO);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<TarefaResponseDTO> atualizar(
+            @PathVariable("id")
+            UUID id,
+            @RequestParam(name = "nome_time", required = false)
+            String nomeTime,
+            @RequestParam(name = "antigo_nome_tarefa")
+            String antigoNomeTarefa,
+            @RequestParam(name = "novo_nome_tarefa", required = false)
+            String novoNomeTarefa,
+            @RequestParam(name = "descricao", required = false)
+            String descricao,
+            @RequestParam(name = "status_tarefa", required = false)
+            StatusTarefa statusTarefa
+    ){
+        Tarefa tarefa = this.tarefaService.atualizar(id, nomeTime, antigoNomeTarefa, novoNomeTarefa, descricao, statusTarefa);
         TarefaResponseDTO tarefaResponseDTO = this.tarefaMapper.toDTO(tarefa);
         return ResponseEntity.ok(tarefaResponseDTO);
     }
