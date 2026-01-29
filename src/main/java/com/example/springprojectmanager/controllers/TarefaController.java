@@ -73,4 +73,16 @@ public class TarefaController {
         TarefaUsuariosResponseDTO tarefaUsuariosResponseDTO = this.tarefaMapper.toTarefaUsuariosResponseDTO(tarefa);
         return ResponseEntity.ok(tarefaUsuariosResponseDTO);
     }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("@tarefaService.temPermissaoParaVerTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<TarefaUsuariosResponseDTO> buscarTarefa(
+            @PathVariable("id")
+            UUID id,
+            @RequestParam("nome_tarefa")
+            String nomeTarefa){
+        Tarefa tarefa = this.tarefaService.buscarTarefa(id, nomeTarefa);
+        TarefaUsuariosResponseDTO tarefaUsuariosResponseDTO = this.tarefaMapper.toTarefaUsuariosResponseDTO(tarefa);
+        return ResponseEntity.ok(tarefaUsuariosResponseDTO);
+    }
 }

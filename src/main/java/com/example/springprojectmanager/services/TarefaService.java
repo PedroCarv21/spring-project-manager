@@ -104,38 +104,15 @@ public class TarefaService {
         }
 
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
-        Time timeDaTarefa = tarefa.getTime();
-        List<Time> times = projeto.getTimes();
-        Time timeDoUsuario = null;
-        for (Time t: times){
-            Optional<TimeUsuario> timeUsuarioOptional = t.getUsuariosRelacionados()
-                    .stream()
-                    .filter(tu -> tu.getUsuario().getId().equals(usuario.getId()))
-                    .findFirst();
-            if (timeUsuarioOptional.isPresent()){
-                timeDoUsuario = timeUsuarioOptional.get().getTime();
-                break;
-            }
-        }
 
-        if (timeDaTarefa == null || !timeDaTarefa.getId().equals(timeDoUsuario.getId())){
+        if (!this.tarefaEUsuarioEstaoNoMesmoTime(projeto.getId(), tarefa.getNome(), usuario.getNome())){
             throw new ConflitoException("A tarefa e o usuário devem estar no mesmo time para que sejam vinculados um ao outro.");
         }
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuarioAutenticado = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
         if (projetoUsuarioAutenticado.getRole().equals(Role.MANAGER)){
-            Time timeDoUsuarioAutenticado = null;
-            for (Time time: times){
-                Optional<TimeUsuario> timeUsuarioOptional = time.getUsuariosRelacionados()
-                        .stream()
-                        .filter(tu -> tu.getUsuario().getId().equals(usuarioAutenticado.getId()))
-                        .findFirst();
-                if (timeUsuarioOptional.isPresent()){
-                    timeDoUsuarioAutenticado = timeUsuarioOptional.get().getTime();
-                    break;
-                }
-            }
-            if (!timeDoUsuarioAutenticado.getId().equals(timeDoUsuario.getId())){
+
+            if (!this.tarefaEUsuarioEstaoNoMesmoTime(projeto.getId(), tarefa.getNome(), usuarioAutenticado.getNome())){
                 throw new ConflitoException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será vinculado a tarefa.");
             }
         }
@@ -166,5 +143,36 @@ public class TarefaService {
                 .stream()
                 .map(TarefaUsuario::getUsuario)
                 .toList();
+    }
+
+    public boolean tarefaEUsuarioEstaoNoMesmoTime(UUID id, String nomeTarefa, String username){
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        Time timeDaTarefa = tarefa.getTime();
+        List<Time> times = projeto.getTimes();
+        Time timeDoUsuario = null;
+        for (Time t: times){
+            Optional<TimeUsuario> timeUsuarioOptional = t.getUsuariosRelacionados()
+                    .stream()
+                    .filter(tu -> tu.getUsuario().getId().equals(usuario.getId()))
+                    .findFirst();
+            if (timeUsuarioOptional.isPresent()){
+                timeDoUsuario = timeUsuarioOptional.get().getTime();
+                break;
+            }
+        }
+
+        return timeDaTarefa != null && timeDoUsuario != null && timeDaTarefa.getId().equals(timeDoUsuario.getId());
+    }
+
+    public boolean temPermissaoParaVerTarefa(UUID id, String nomeTarefa, String username){
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+        if (projetoUsuario.getRole().equals(Role.ADMIN)){
+            return true;
+        }
+        return this.tarefaEUsuarioEstaoNoMesmoTime(id, nomeTarefa, username);
     }
 }
