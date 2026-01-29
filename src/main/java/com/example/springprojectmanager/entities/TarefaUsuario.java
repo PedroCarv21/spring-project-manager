@@ -23,4 +23,13 @@ public class TarefaUsuario {
     @MapsId("usuarioId")
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
+
+    public TarefaUsuario() {
+    }
+
+    public TarefaUsuario(TarefaUsuarioId tarefaUsuarioId, Tarefa tarefa, Usuario usuario) {
+        this.tarefaUsuarioId = tarefaUsuarioId;
+        this.tarefa = tarefa;
+        this.usuario = usuario;
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.*;
+import com.example.springprojectmanager.entities.chavesprimariascompostas.TarefaUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusTarefa;
 import com.example.springprojectmanager.exceptions.ConflitoException;
@@ -10,6 +11,8 @@ import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,6 +25,7 @@ public class TarefaService {
     private final UsuarioService usuarioService;
     private final TimeUsuarioService timeUsuarioService;
     private final ProjetoUsuarioService projetoUsuarioService;
+    private final TarefaUsuarioService tarefaUsuarioService;
     private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
 
     public Tarefa salvar(UUID id, String nomeTime, String nomeTarefa, String descricao){
@@ -88,5 +92,79 @@ public class TarefaService {
         }
 
         return this.tarefaRepository.save(tarefa);
+    }
+
+    public Tarefa vincularTarefaAUmParticipante(UUID id, String nomeTarefa, String username){
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+
+        if (projetoUsuario.getRole().equals(Role.ADMIN)){
+            throw new ConflitoException("O administrador do projeto não deve estar vinculado a nenhuma tarefa");
+        }
+
+        Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        Time timeDaTarefa = tarefa.getTime();
+        List<Time> times = projeto.getTimes();
+        Time timeDoUsuario = null;
+        for (Time t: times){
+            Optional<TimeUsuario> timeUsuarioOptional = t.getUsuariosRelacionados()
+                    .stream()
+                    .filter(tu -> tu.getUsuario().getId().equals(usuario.getId()))
+                    .findFirst();
+            if (timeUsuarioOptional.isPresent()){
+                timeDoUsuario = timeUsuarioOptional.get().getTime();
+                break;
+            }
+        }
+
+        if (timeDaTarefa == null || !timeDaTarefa.getId().equals(timeDoUsuario.getId())){
+            throw new ConflitoException("A tarefa e o usuário devem estar no mesmo time para que sejam vinculados um ao outro.");
+        }
+        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        ProjetoUsuario projetoUsuarioAutenticado = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
+        if (projetoUsuarioAutenticado.getRole().equals(Role.MANAGER)){
+            Time timeDoUsuarioAutenticado = null;
+            for (Time time: times){
+                Optional<TimeUsuario> timeUsuarioOptional = time.getUsuariosRelacionados()
+                        .stream()
+                        .filter(tu -> tu.getUsuario().getId().equals(usuarioAutenticado.getId()))
+                        .findFirst();
+                if (timeUsuarioOptional.isPresent()){
+                    timeDoUsuarioAutenticado = timeUsuarioOptional.get().getTime();
+                    break;
+                }
+            }
+            if (!timeDoUsuarioAutenticado.getId().equals(timeDoUsuario.getId())){
+                throw new ConflitoException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será vinculado a tarefa.");
+            }
+        }
+
+
+        if (this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario)){
+            throw new ConflitoException("Este usuário já está vinculado a tarefa");
+        }
+        TarefaUsuario tarefaUsuario = new TarefaUsuario(new TarefaUsuarioId(), tarefa, usuario);
+        this.tarefaUsuarioService.salvar(tarefaUsuario);
+        return tarefa;
+    }
+
+    public Tarefa buscarTarefa(UUID id, String nomeTarefa){
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        return projeto
+                .getTarefas()
+                .stream()
+                .filter(tarefa -> tarefa.getNome().equals(nomeTarefa))
+                .findFirst()
+                .orElseThrow(() -> new NaoEncontradoException("Tarefa não encontrada."));
+    }
+
+    public List<Usuario> buscarUsuariosDaTarefa(UUID id, String nomeTarefa){
+        Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        return tarefa
+                .getUsuarioRelacionados()
+                .stream()
+                .map(TarefaUsuario::getUsuario)
+                .toList();
     }
 }
