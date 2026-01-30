@@ -9,6 +9,7 @@ import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.TarefaRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,16 +61,18 @@ public class TarefaService {
         return this.tarefaRepository.save(tarefa);
     }
 
-    public Tarefa atualizar(UUID id, String nomeTime, String antigoNomeTarefa, String novoNomeTarefa, String descricao, StatusTarefa statusTarefa){
+    @Transactional
+    public Tarefa atualizar(UUID id, String nomeTime, String antigoNomeTarefa, String novoNomeTarefa, String descricao, StatusTarefa statusTarefa) throws AccessDeniedException {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
-        Tarefa tarefa = projeto
-                .getTarefas()
-                .stream()
-                .filter(t -> t.getNome().equals(antigoNomeTarefa))
-                .findFirst()
-                .orElseThrow(() -> new ConflitoException("Não existe uma tarefa com o nome '" + antigoNomeTarefa + "'."));
+        Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
+        Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
+        if (projetoUsuario.getRole().equals(Role.MEMBER) && !this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuarioAutenticado)){
+            throw new AccessDeniedException("Como membro, você deve estar vinculado a tarefa para poder atualizá-la.");
+        }
 
         if (novoNomeTarefa != null && !novoNomeTarefa.strip().equals("")){
+            this.usuarioTemAutorizacaoParaAtualizar(projeto, usuarioAutenticado);
             boolean existeTarefaComEsteNome = projeto.getTarefas().stream().anyMatch(t -> t.getNome().equals(novoNomeTarefa));
             if (existeTarefaComEsteNome){
                 throw new ConflitoException("O nome '" + novoNomeTarefa + "' já está em uso para uma das tarefas deste projeto.");
@@ -78,13 +81,23 @@ public class TarefaService {
         }
 
         if (nomeTime != null && !nomeTime.strip().equals("")) {
+            if (!projetoUsuario.getRole().equals(Role.ADMIN)){
+                throw new AccessDeniedException("Apenas o administrador decide qual será o time da tarefa.");
+            }
             Time time = this.timeService
                     .capturarTime(projeto, nomeTime)
                     .orElseThrow(() -> new ConflitoException("Este time não existe."));
+
+            if (tarefa.getTime() == null || !tarefa.getTime().getNome().equals(nomeTime)){
+                tarefa.getUsuarioRelacionados()
+                        .forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
+            }
+
             tarefa.setTime(time);
         }
 
         if (descricao != null && !descricao.strip().equals("")){
+            this.usuarioTemAutorizacaoParaAtualizar(projeto, usuarioAutenticado);
             tarefa.setDescricao(descricao);
         }
 
@@ -93,6 +106,14 @@ public class TarefaService {
         }
 
         return this.tarefaRepository.save(tarefa);
+    }
+
+    public boolean usuarioTemAutorizacaoParaAtualizar(Projeto projeto, Usuario usuario){
+        ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+        if (projetoUsuario.getRole().equals(Role.MEMBER)){
+            throw new AccessDeniedException("Membros só podem atualizar o status da tarefa.");
+        }
+        return true;
     }
 
     public Tarefa vincularTarefaAUmParticipante(UUID id, String nomeTarefa, String username){

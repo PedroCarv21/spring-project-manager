@@ -54,7 +54,11 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessDeniedException.class)
-    public ErroResponse tratarAccessDeniedException(){
-        return new ErroResponse("Usuario não autorizado ou 'DESATIVADO'.", List.of());
+    public ErroResponse tratarAccessDeniedException(AccessDeniedException e){
+        String msg = "Usuario não autorizado ou 'DESATIVADO'.";
+        if (e.getMessage() != null){
+            msg = e.getMessage();
+        }
+        return new ErroResponse(msg, List.of());
     }
 }

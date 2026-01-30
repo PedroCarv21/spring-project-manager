@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @RestController
@@ -38,7 +39,7 @@ public class TarefaController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@tarefaService.temPermissaoParaInteragirComTarefa(#id, #antigoNomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaResponseDTO> atualizar(
             @PathVariable("id")
             UUID id,
@@ -54,11 +55,12 @@ public class TarefaController {
             StatusTarefa statusTarefa
     ){
         Tarefa tarefa = this.tarefaService.atualizar(id, nomeTime, antigoNomeTarefa, novoNomeTarefa, descricao, statusTarefa);
+
         TarefaResponseDTO tarefaResponseDTO = this.tarefaMapper.toDTO(tarefa);
         return ResponseEntity.ok(tarefaResponseDTO);
     }
 
-    @PutMapping("vincular_tarefa/{id}")
+    @PutMapping("vincular_tarefa_usuario/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaUsuariosResponseDTO> vincularTarefaAUmParticipante(
             @PathVariable("id")
