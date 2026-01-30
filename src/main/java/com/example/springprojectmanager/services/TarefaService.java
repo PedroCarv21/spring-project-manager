@@ -178,23 +178,21 @@ public class TarefaService {
     }
 
     @Transactional
-    public Tarefa deletar(UUID id, String nomeTarefa, String username){
+    public Tarefa desvincularTarefaDoUsuario(UUID id, String nomeTarefa, String username){
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
         boolean existeTarefaUsuario = this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario);
         if (!existeTarefaUsuario){
             throw new ConflitoException("Usuário e tarefa não estão vinculados");
         }
-        Projeto projeto = projetoService.capturarProjetoPorId(id);
-        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
-        ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
-
-        if (projetoUsuario.getRole().equals(Role.MANAGER)){
-            if (!tarefaEUsuarioEstaoNoMesmoTime(id, nomeTarefa, usuarioAutenticado.getNome())){
-                throw new ConflitoException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será desvinculado da tarefa.");
-            }
-        }
-        this.tarefaUsuarioService.deletar(tarefa, usuario);
+        this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, usuario);
         return tarefa;
+    }
+
+    @Transactional
+    public void deletar(UUID id, String nomeTarefa){
+        Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        tarefa.getUsuarioRelacionados().forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
+        this.tarefaRepository.delete(tarefa);
     }
 }

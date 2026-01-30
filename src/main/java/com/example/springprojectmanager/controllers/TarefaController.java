@@ -5,8 +5,6 @@ import com.example.springprojectmanager.dtos.TarefaUsuariosResponseDTO;
 import com.example.springprojectmanager.entities.Tarefa;
 import com.example.springprojectmanager.enums.StatusTarefa;
 import com.example.springprojectmanager.mappers.TarefaMapper;
-import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
-import com.example.springprojectmanager.services.ProjetoService;
 import com.example.springprojectmanager.services.TarefaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -75,7 +73,8 @@ public class TarefaController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
+            "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaUsuariosResponseDTO> buscarTarefa(
             @PathVariable("id")
             UUID id,
@@ -86,13 +85,33 @@ public class TarefaController {
         return ResponseEntity.ok(tarefaUsuariosResponseDTO);
     }
 
+    @DeleteMapping("desvicular_tarefa_usuario/{id}")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) " +
+            "and @tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
+            "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<TarefaUsuariosResponseDTO> desvincularTarefaDoUsuario(
+            @PathVariable("id")
+            UUID id,
+            @RequestParam("nome_tarefa")
+            String nomeTarefa,
+            @RequestParam("nome_usuario")
+            String username){
+        Tarefa tarefa = this.tarefaService.desvincularTarefaDoUsuario(id, nomeTarefa, username);
+        TarefaUsuariosResponseDTO tarefaUsuariosResponseDTO = this.tarefaMapper.toTarefaUsuariosResponseDTO(tarefa);
+        return ResponseEntity.ok(tarefaUsuariosResponseDTO);
+    }
+
+
     @DeleteMapping("/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) " +
             "and @tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
             "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
-    public ResponseEntity<TarefaUsuariosResponseDTO> deletar(UUID id, String nomeTarefa, String username){
-        Tarefa tarefa = this.tarefaService.deletar(id, nomeTarefa, username);
-        TarefaUsuariosResponseDTO tarefaUsuariosResponseDTO = this.tarefaMapper.toTarefaUsuariosResponseDTO(tarefa);
-        return ResponseEntity.ok(tarefaUsuariosResponseDTO);
+    public ResponseEntity<Void> deletar(
+            @PathVariable("id")
+            UUID id,
+            @RequestParam("nome_tarefa")
+            String nomeTarefa){
+        this.tarefaService.deletar(id, nomeTarefa);
+        return ResponseEntity.noContent().build();
     }
 }

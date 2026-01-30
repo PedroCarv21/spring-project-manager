@@ -20,7 +20,7 @@ public class TarefaUsuarioService {
     public boolean existeTarefaUsuario(Tarefa tarefa, Usuario usuario){
         return this.tarefaUsuarioRepository.existsByTarefaAndUsuario(tarefa, usuario);
     }
-    public void deletar(Tarefa tarefa, Usuario usuario){
+    public void desvincularTarefaDoUsuario(Tarefa tarefa, Usuario usuario){
         this.tarefaUsuarioRepository.deleteByTarefaAndUsuario(tarefa, usuario);
     }
 }
