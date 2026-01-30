@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TarefaUsuarioRepository extends JpaRepository<TarefaUsuario, TarefaUsuarioId> {
 
     boolean existsByTarefaAndUsuario(Tarefa tarefa, Usuario usuario);
+
+    void deleteByTarefaAndUsuario(Tarefa tarefa, Usuario usuario);
 }

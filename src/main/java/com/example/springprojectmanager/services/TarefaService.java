@@ -10,6 +10,7 @@ import com.example.springprojectmanager.repositories.TarefaRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -166,7 +167,7 @@ public class TarefaService {
         return timeDaTarefa != null && timeDoUsuario != null && timeDaTarefa.getId().equals(timeDoUsuario.getId());
     }
 
-    public boolean temPermissaoParaVerTarefa(UUID id, String nomeTarefa, String username){
+    public boolean temPermissaoParaInteragirComTarefa(UUID id, String nomeTarefa, String username){
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
@@ -174,5 +175,26 @@ public class TarefaService {
             return true;
         }
         return this.tarefaEUsuarioEstaoNoMesmoTime(id, nomeTarefa, username);
+    }
+
+    @Transactional
+    public Tarefa deletar(UUID id, String nomeTarefa, String username){
+        Usuario usuario = this.usuarioService.buscarPorNome(username);
+        Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        boolean existeTarefaUsuario = this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario);
+        if (!existeTarefaUsuario){
+            throw new ConflitoException("Usuário e tarefa não estão vinculados");
+        }
+        Projeto projeto = projetoService.capturarProjetoPorId(id);
+        Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
+
+        if (projetoUsuario.getRole().equals(Role.MANAGER)){
+            if (!tarefaEUsuarioEstaoNoMesmoTime(id, nomeTarefa, usuarioAutenticado.getNome())){
+                throw new ConflitoException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será desvinculado da tarefa.");
+            }
+        }
+        this.tarefaUsuarioService.deletar(tarefa, usuario);
+        return tarefa;
     }
 }
