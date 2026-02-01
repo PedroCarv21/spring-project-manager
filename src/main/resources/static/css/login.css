@@ -69,3 +69,9 @@ a{
 a:hover{
     text-decoration: underline;
 }
+
+.msg_erro{
+    font-family: sans-serif;
+    color: red;
+    min-height: 18px;
+}

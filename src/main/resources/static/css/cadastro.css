@@ -68,3 +68,21 @@ p{
     font-family: sans-serif;
     margin: 0;
 }
+
+#bloco_link_login{
+    padding: 10px;
+}
+
+span{
+    font-family: sans-serif;
+    color: white;
+}
+
+a{
+    color:  #00e64d;
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: underline;
+}

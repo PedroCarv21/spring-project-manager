@@ -13,6 +13,9 @@
             <input class="entrada" type="email"  placeholder="Email" th:field="*{email}" required>
             <input class="entrada" type="password"  placeholder="Senha" th:field="*{senha}" required minlength="7">
             <input type="submit">
+            <div id="bloco_link_login">
+                <span>Já tem uma conta? <a th:href="@{/login}">Faça o login</a> </span>
+            </div>
             <div id="bloco_erro">
                 <p th:if="${erroNegocio}" th:text="${erroNegocio}"></p>
             </div>

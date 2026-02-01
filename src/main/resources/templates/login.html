@@ -15,6 +15,7 @@
             <div>
                 <span>Não tem conta? <a th:href="@{/cadastro}">Cadastra-se</a> </span>
             </div>
+            <p th:text="${param.error} ? 'Nome de usuário e/ou senha incorretos.' : ' '" class="msg_erro"></p>
     </form>
 </body>
 </html>

@@ -44,7 +44,7 @@ public class UsuarioService {
         List<Usuario> usuarioList = this.usuarioRepository.findAll();
         boolean existeUsuarioComEsteNome = usuarioList.stream().anyMatch(u -> u.getNome().equals(usuario.getNome()));
         if (existeUsuarioComEsteNome){
-            throw new ConflitoException("Já existe um usuário com este nome");
+            throw new ConflitoException("Este nome de usuário já está em uso.");
         }
         usuario.setSenha(this.passwordEncoder.encode(usuario.getSenha()));
         return this.usuarioRepository.save(usuario);
