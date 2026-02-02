@@ -25,18 +25,6 @@ public class UsuarioController implements CriadorLocation{
     private final UsuarioMapper usuarioMapper;
     private final FornecedorUsuarioAutenticado fornecedorUsuarioAutenticado;
 
-//    @PostMapping
-//    public ResponseEntity<Usuario> salvar(
-//            @RequestBody
-//            @Valid
-//            UsuarioRequestDTO usuarioRequestDTO){
-//        Usuario usuario = this.usuarioMapper.toEntity(usuarioRequestDTO);
-//        Usuario usuarioSalvo = this.usuarioService.salvar(usuario);
-//        return ResponseEntity
-//                .created(gerarLocation(usuarioSalvo.getId()))
-//                .body(usuarioSalvo);
-//    }
-
     @GetMapping
     public ResponseEntity<UsuarioResponseDTO> consultar(){
         Usuario usuarioAutenticado = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();

@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ErroResponse tratarAccessDeniedException(AccessDeniedException e){
         String msg = "Usuario não autorizado ou 'DESATIVADO'.";
-        if (e.getMessage() != null){
+        if (!e.getMessage().equals("Access Denied")){
             msg = e.getMessage();
         }
         return new ErroResponse(msg, List.of());
