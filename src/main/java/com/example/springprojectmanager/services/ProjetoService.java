@@ -60,12 +60,6 @@ public class ProjetoService {
             projetoCapturado.setNome(novoNome);
         }
         if (statusProjeto != null){
-            if (statusProjeto.equals(StatusProjeto.CONCLUIDO)){
-                this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
-            }
-            else if (projetoCapturado.getStatus().equals(StatusProjeto.CANCELADO) || projetoCapturado.getStatus().equals(StatusProjeto.CONCLUIDO)){
-                this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ATIVO);
-            }
             projetoCapturado.setStatus(statusProjeto);
         }
         return this.projetoRepository.save(projetoCapturado);
@@ -126,7 +120,7 @@ public class ProjetoService {
 
         List<Projeto> projetoList = projetoStream.toList();
         if (projetoList.isEmpty()){
-            throw new NaoEncontradoException("Não foi encontrado um projeto com estas definições.");
+            throw new NaoEncontradoException("Nenhum projeto foi encontrado.");
         }
         return projetoList;
     }
@@ -135,17 +129,10 @@ public class ProjetoService {
 
         Projeto projetoCapturado = this.capturarProjetoAdministradoPorVoce(nome).get();
 
-        if (projetoCapturado.getStatus().equals(StatusProjeto.CANCELADO)){
-            throw new ConflitoException("Esse projeto já foi cancelado.");
-        }
-        projetoCapturado.setStatus(StatusProjeto.CANCELADO);
-//        atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
-        this.atualizarStatusDosTimes(projetoCapturado, StatusTime.ENCERRADO);
-        this.projetoRepository.save(projetoCapturado);
-    }
+        this.projetoEstaCancelado(projetoCapturado);
 
-    protected void atualizarStatusDosTimes(Projeto projeto, StatusTime statusTime){
-        projeto.getTimes().forEach(time -> time.setStatus(statusTime));
+        projetoCapturado.setStatus(StatusProjeto.CANCELADO);
+        this.projetoRepository.save(projetoCapturado);
     }
 
     protected Projeto buscarPorNome(String nome){
@@ -154,5 +141,11 @@ public class ProjetoService {
             throw new NaoEncontradoException("Nao foi encontrado um projeto com o nome " + nome);
         }
         return projetoOptional.get();
+    }
+
+    public void projetoEstaCancelado(Projeto projeto){
+        if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
+            throw new ConflitoException("Não é possível realizar essa ação com o projeto cancelado");
+        }
     }
 }

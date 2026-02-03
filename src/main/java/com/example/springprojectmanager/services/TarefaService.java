@@ -32,6 +32,9 @@ public class TarefaService {
 
     public Tarefa salvar(UUID id, String nomeTime, String nomeTarefa, String descricao){
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         boolean existeTarefaComEsteNome = projeto.getTarefas().stream().anyMatch(t -> t.getNome().equals(nomeTarefa));
         if (existeTarefaComEsteNome){
             throw new ConflitoException("Já existe uma tarefa chamada '" + nomeTarefa + "' neste projeto.");
@@ -64,6 +67,9 @@ public class TarefaService {
     @Transactional
     public Tarefa atualizar(UUID id, String nomeTime, String antigoNomeTarefa, String novoNomeTarefa, String descricao, StatusTarefa statusTarefa) throws AccessDeniedException {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
@@ -118,6 +124,9 @@ public class TarefaService {
 
     public Tarefa vincularTarefaAUmParticipante(UUID id, String nomeTarefa, String username){
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
 
@@ -200,6 +209,10 @@ public class TarefaService {
 
     @Transactional
     public Tarefa desvincularTarefaDoUsuario(UUID id, String nomeTarefa, String username){
+
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
         boolean existeTarefaUsuario = this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario);
@@ -212,6 +225,10 @@ public class TarefaService {
 
     @Transactional
     public void deletar(UUID id, String nomeTarefa){
+
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
         tarefa.getUsuarioRelacionados().forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
         this.tarefaRepository.delete(tarefa);

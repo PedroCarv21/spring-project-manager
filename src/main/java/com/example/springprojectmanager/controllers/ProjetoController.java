@@ -45,7 +45,7 @@ public class ProjetoController implements CriadorLocation{
             String nomeAtual,
             @RequestParam(value = "novo_nome", required = false)
             String novoNome,
-            @RequestParam(value = "status")
+            @RequestParam(value = "status", required = false)
             StatusProjetoAtualizacao statusProjetoAtualizacao){
 
         StatusProjeto statusProjeto = this.projetoMapper.toStatusProjeto(statusProjetoAtualizacao);

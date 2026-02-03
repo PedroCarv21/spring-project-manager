@@ -62,9 +62,7 @@ public class TimeService {
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
-            throw new ConflitoException("Não é possível criar um time em um projeto que já foi " + projeto.getStatus().toString());
-        }
+        this.projetoService.projetoEstaCancelado(projeto);
 
         boolean existeTimeComEsteNome = projeto.getTimes().stream().anyMatch(time -> time.getNome().equals(nomeTime));
 
@@ -80,7 +78,15 @@ public class TimeService {
 
     public Time adicionarParticipante(String nomeProjeto, String nomeTime, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
+
+        if (time.getStatus().equals(StatusTime.ENCERRADO)){
+            throw new ConflitoException("Não é possível adicionar um participante em um time já encerrado.");
+        }
+
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Optional<ProjetoUsuario> projetoUsuarioOptional = this.projetoUsuarioRepository.findByProjetoAndUsuario(projeto, usuario);
         if (projetoUsuarioOptional.isPresent()){
@@ -95,8 +101,10 @@ public class TimeService {
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        if (projeto.getStatus().equals(StatusProjeto.CANCELADO) || projeto.getStatus().equals(StatusProjeto.CONCLUIDO)){
-            throw new ConflitoException("Não é possível atualizar um time em um projeto que já foi " + projeto.getStatus().toString());
+        this.projetoService.projetoEstaCancelado(projeto);
+
+        if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
+            throw new ConflitoException("Não é possível atualizar um time em um projeto que já foi cacelado");
         }
 
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeAtualTime);
@@ -120,10 +128,13 @@ public class TimeService {
 
     public Time atualizarRoleParticipante(String nomeProjeto, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
         if (projetoUsuario.getRole().equals(Role.ADMIN)){
-            throw new ConflitoException("O administrador não pode mudar a sua ROLE");
+            throw new ConflitoException("O administrador não pode mudar a sua própria ROLE");
         }
         projetoUsuario.setRole(role);
         this.projetoUsuarioService.salvar(projetoUsuario);
@@ -144,6 +155,9 @@ public class TimeService {
     public void deletar(String nomeProjeto, String nomeTime){
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeTime);
         if (timeOptional.isEmpty()){
             throw new NaoEncontradoException("Não foi encontrado um time " + nomeTime + " dentro do projeto " + nomeProjeto);
@@ -170,6 +184,9 @@ public class TimeService {
 
     public void excluirUsuario(String nomeProjeto, String nomeTime, String username){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
+
+        this.projetoService.projetoEstaCancelado(projeto);
+
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
 
