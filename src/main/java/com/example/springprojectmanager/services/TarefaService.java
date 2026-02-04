@@ -73,10 +73,6 @@ public class TarefaService {
 
         Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
 
-        if (tarefa.getTime() != null){
-            this.timeService.verificarStatusDoTime(tarefa.getTime());
-        }
-
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
         if (projetoUsuario.getRole().equals(Role.MEMBER) && !this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuarioAutenticado)){
@@ -101,6 +97,7 @@ public class TarefaService {
                     .orElseThrow(() -> new ConflitoException("Este time não existe."));
 
             this.timeService.verificarStatusDoTime(time);
+
             if (tarefa.getTime() == null || !tarefa.getTime().getNome().equals(nomeTime)){
                 tarefa.getUsuarioRelacionados()
                         .forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
@@ -153,7 +150,7 @@ public class TarefaService {
         if (projetoUsuarioAutenticado.getRole().equals(Role.MANAGER)){
 
             if (!this.tarefaEUsuarioEstaoNoMesmoTime(projeto.getId(), tarefa.getNome(), usuarioAutenticado.getNome())){
-                throw new ConflitoException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será vinculado a tarefa.");
+                throw new AccessDeniedException("Como gerente, você deve estar no mesmo time que a tarefa e o usuário que será vinculado a tarefa.");
             }
         }
 
