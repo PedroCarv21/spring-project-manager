@@ -4,5 +4,6 @@ public enum StatusTarefa {
     INICIADO,
     EM_ANDAMENTO,
     CONCLUIDO,
-    ATRASADA
+    ATRASADA,
+    CANCELADO
 }

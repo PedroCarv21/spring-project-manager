@@ -33,7 +33,7 @@ public class TarefaService {
     public Tarefa salvar(UUID id, String nomeTime, String nomeTarefa, String descricao){
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         boolean existeTarefaComEsteNome = projeto.getTarefas().stream().anyMatch(t -> t.getNome().equals(nomeTarefa));
         if (existeTarefaComEsteNome){
@@ -56,6 +56,7 @@ public class TarefaService {
             Time time = this.timeService
                     .capturarTime(projeto, nomeTime)
                     .orElseThrow(() -> new NaoEncontradoException("O time '" + nomeTime + "' não foi encontrado neste projeto."));
+            this.timeService.verificarStatusDoTime(time);
             if (projetoUsuario.getRole().equals(Role.MANAGER)){
                 this.timeUsuarioService.buscarTimeUsuario(time, usuarioAutenticado);
             }
@@ -68,9 +69,14 @@ public class TarefaService {
     public Tarefa atualizar(UUID id, String nomeTime, String antigoNomeTarefa, String novoNomeTarefa, String descricao, StatusTarefa statusTarefa) throws AccessDeniedException {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
+
+        if (tarefa.getTime() != null){
+            this.timeService.verificarStatusDoTime(tarefa.getTime());
+        }
+
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
         if (projetoUsuario.getRole().equals(Role.MEMBER) && !this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuarioAutenticado)){
@@ -94,6 +100,7 @@ public class TarefaService {
                     .capturarTime(projeto, nomeTime)
                     .orElseThrow(() -> new ConflitoException("Este time não existe."));
 
+            this.timeService.verificarStatusDoTime(time);
             if (tarefa.getTime() == null || !tarefa.getTime().getNome().equals(nomeTime)){
                 tarefa.getUsuarioRelacionados()
                         .forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
@@ -125,7 +132,7 @@ public class TarefaService {
     public Tarefa vincularTarefaAUmParticipante(UUID id, String nomeTarefa, String username){
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
@@ -135,6 +142,8 @@ public class TarefaService {
         }
 
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+
+        this.timeService.verificarStatusDoTime(tarefa.getTime());
 
         if (!this.tarefaEUsuarioEstaoNoMesmoTime(projeto.getId(), tarefa.getNome(), usuario.getNome())){
             throw new ConflitoException("A tarefa e o usuário devem estar no mesmo time para que sejam vinculados um ao outro.");
@@ -211,10 +220,12 @@ public class TarefaService {
     public Tarefa desvincularTarefaDoUsuario(UUID id, String nomeTarefa, String username){
 
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
-        this.projetoService.projetoEstaCancelado(projeto);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+
+        this.timeService.verificarStatusDoTime(tarefa.getTime());
+
         boolean existeTarefaUsuario = this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario);
         if (!existeTarefaUsuario){
             throw new ConflitoException("Usuário e tarefa não estão vinculados");
@@ -227,9 +238,12 @@ public class TarefaService {
     public void deletar(UUID id, String nomeTarefa){
 
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
+        if (tarefa.getTime() != null){
+            this.timeService.verificarStatusDoTime(tarefa.getTime());
+        }
         tarefa.getUsuarioRelacionados().forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
         this.tarefaRepository.delete(tarefa);
     }

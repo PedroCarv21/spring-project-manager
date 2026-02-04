@@ -6,7 +6,6 @@ import com.example.springprojectmanager.entities.Usuario;
 import com.example.springprojectmanager.entities.chavesprimariascompostas.ProjetoUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
-import com.example.springprojectmanager.enums.StatusTime;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.ProjetoRepository;
@@ -129,7 +128,7 @@ public class ProjetoService {
 
         Projeto projetoCapturado = this.capturarProjetoAdministradoPorVoce(nome).get();
 
-        this.projetoEstaCancelado(projetoCapturado);
+        this.verificarStatusDoProjeto(projetoCapturado);
 
         projetoCapturado.setStatus(StatusProjeto.CANCELADO);
         this.projetoRepository.save(projetoCapturado);
@@ -143,7 +142,7 @@ public class ProjetoService {
         return projetoOptional.get();
     }
 
-    public void projetoEstaCancelado(Projeto projeto){
+    public void verificarStatusDoProjeto(Projeto projeto){
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
             throw new ConflitoException("Não é possível realizar essa ação com o projeto cancelado");
         }

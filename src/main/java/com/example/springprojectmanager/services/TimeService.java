@@ -2,7 +2,7 @@ package com.example.springprojectmanager.services;
 
 import com.example.springprojectmanager.entities.*;
 import com.example.springprojectmanager.enums.Role;
-import com.example.springprojectmanager.enums.StatusProjeto;
+import com.example.springprojectmanager.enums.StatusTarefa;
 import com.example.springprojectmanager.enums.StatusTime;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
@@ -13,6 +13,7 @@ import com.example.springprojectmanager.repositories.TimeUsuarioRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ public class TimeService {
     private final TimeUsuarioService timeUsuarioService;
     private final TimeUsuarioRepository timeUsuarioRepository;
     private final UsuarioService usuarioService;
+    private final TarefaUsuarioService tarefaUsuarioService;
 
     public List<Projeto> pesquisar(String nomeProjeto, String nomeTime){
 
@@ -62,7 +64,7 @@ public class TimeService {
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         boolean existeTimeComEsteNome = projeto.getTimes().stream().anyMatch(time -> time.getNome().equals(nomeTime));
 
@@ -79,13 +81,11 @@ public class TimeService {
     public Time adicionarParticipante(String nomeProjeto, String nomeTime, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new NaoEncontradoException("Este time não foi encontrado neste projeto."));
 
-        if (time.getStatus().equals(StatusTime.ENCERRADO)){
-            throw new ConflitoException("Não é possível adicionar um participante em um time já encerrado.");
-        }
+        this.verificarStatusDoTime(time);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Optional<ProjetoUsuario> projetoUsuarioOptional = this.projetoUsuarioRepository.findByProjetoAndUsuario(projeto, usuario);
@@ -101,11 +101,7 @@ public class TimeService {
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        this.projetoService.projetoEstaCancelado(projeto);
-
-        if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
-            throw new ConflitoException("Não é possível atualizar um time em um projeto que já foi cacelado");
-        }
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeAtualTime);
 
@@ -129,7 +125,7 @@ public class TimeService {
     public Time atualizarRoleParticipante(String nomeProjeto, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
@@ -146,6 +142,7 @@ public class TimeService {
                     .filter(u -> u.getNome().equals(username))
                     .findFirst();
             if (usuarioOptional.isPresent()){
+                this.verificarStatusDoTime(time);
                 return time;
             }
         }
@@ -156,16 +153,14 @@ public class TimeService {
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
-        this.projetoService.projetoEstaCancelado(projeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
 
         Optional<Time> timeOptional = this.capturarTime(projeto, nomeTime);
         if (timeOptional.isEmpty()){
             throw new NaoEncontradoException("Não foi encontrado um time " + nomeTime + " dentro do projeto " + nomeProjeto);
         }
         Time time = timeOptional.get();
-        if (time.getStatus().equals(StatusTime.ENCERRADO)){
-            throw new ConflitoException("Esse time já foi encerrado.");
-        }
+        this.verificarStatusDoTime(time);
         time.setStatus(StatusTime.ENCERRADO);
         this.timeRepository.save(time);
     }
@@ -182,10 +177,9 @@ public class TimeService {
         return timeOptional.get();
     }
 
+    @Transactional
     public void excluirUsuario(String nomeProjeto, String nomeTime, String username){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
-
-        this.projetoService.projetoEstaCancelado(projeto);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
@@ -196,7 +190,38 @@ public class TimeService {
         }
 
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new ConflitoException("Time não encontrado"));
+
+        List<Tarefa> tarefas = time.getTarefas();
+
+
+
+        List<Tarefa> tarefasDoUsuario = tarefas
+                .stream()
+                .filter(t -> this.tarefaUsuarioService.existeTarefaUsuario(t, usuario) && !t.getStatus().equals(StatusTarefa.CANCELADO))
+                .toList();
+
+
+        if (!tarefasDoUsuario.isEmpty()){
+            System.out.println(tarefasDoUsuario.size());
+            StringBuilder nomesTarefas = new StringBuilder();
+            for (Tarefa t: tarefasDoUsuario){
+                nomesTarefas.append(" - ").append(t.getNome());
+            }
+            throw new ConflitoException("Este usuário ainda está vinculado com a(s) seguinte(s) tarefa(s) deste time:" + nomesTarefas);
+        }
+        tarefas
+                .stream()
+                .filter(t -> this.tarefaUsuarioService.existeTarefaUsuario(t, usuario))
+                .forEach(t -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(t, usuario));
+
+
         this.timeUsuarioService.deletarTimeUsuario(time, usuario);
         this.projetoUsuarioService.deletarProjetoUsuario(projeto, usuario);
+    }
+
+    public void verificarStatusDoTime(Time time){
+        if (time.getStatus().equals(StatusTime.ENCERRADO)){
+            throw new ConflitoException("Não é possível realizar essa ação pois o time '" + time.getNome() + "' foi encerrado.");
+        }
     }
 }
