@@ -97,18 +97,16 @@ public class TimeService {
         return time;
     }
 
-    public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime, StatusTime statusTime){
+    public Time atualizar(String nomeProjeto, String nomeAtualTime, String novoNomeTime){
 
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
 
         this.projetoService.verificarStatusDoProjeto(projeto);
 
-        Optional<Time> timeOptional = this.capturarTime(projeto, nomeAtualTime);
+        Time time = this.capturarTime(projeto, nomeAtualTime)
+                .orElseThrow(() -> new NaoEncontradoException("Não existe nenhum time '" + nomeAtualTime + "' dentro do projeto '" + nomeProjeto + "'."));
 
-        if (timeOptional.isEmpty()){
-            throw new NaoEncontradoException("Não existe nenhum time '" + nomeAtualTime + "' dentro do projeto '" + nomeProjeto + "'.");
-        }
-        Time time = timeOptional.get();
+        this.verificarStatusDoTime(time);
         if (novoNomeTime != null && !novoNomeTime.strip().equals("")){
             Optional<Time> timeComNovoNome = this.capturarTime(projeto, novoNomeTime);
             if (timeComNovoNome.isPresent() && !nomeAtualTime.equals(novoNomeTime)){
@@ -116,11 +114,9 @@ public class TimeService {
             }
             time.setNome(novoNomeTime);
         }
-        if (statusTime != null){
-            time.setStatus(statusTime);
-        }
         return this.timeRepository.save(time);
     }
+
 
     public Time atualizarRoleParticipante(String nomeProjeto, String username, Role role){
         Projeto projeto = this.projetoService.capturarProjetoAdministradoPorVoce(nomeProjeto).get();
@@ -147,6 +143,12 @@ public class TimeService {
             }
         }
         return null;
+    }
+    public Time reativar(String nomeProjeto, String nomeTime){
+        Projeto projeto = this.projetoService.buscarPorNome(nomeProjeto);
+        Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new ConflitoException("Time não encontrado."));
+        time.setStatus(StatusTime.ATIVO);
+        return this.timeRepository.save(time);
     }
 
     public void deletar(String nomeProjeto, String nomeTime){

@@ -74,10 +74,9 @@ public class TimeController implements CriadorLocation{
             @RequestParam("nome_projeto") String nomeProjeto,
             @NotBlank(message = "Informe o nome atual do time.")
             @RequestParam("nome_atual_time") String nomeAtualTime,
-            @RequestParam(value = "novo_nome_time", required = false) String novoNomeTime,
-            @RequestParam(value = "status", required = false) StatusTime status){
+            @RequestParam(value = "novo_nome_time", required = false) String novoNomeTime){
 
-        Time timeAtualizado = this.timeService.atualizar(nomeProjeto, nomeAtualTime, novoNomeTime, status);
+        Time timeAtualizado = this.timeService.atualizar(nomeProjeto, nomeAtualTime, novoNomeTime);
         TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(timeAtualizado);
         return ResponseEntity.ok(timeResponseDTO);
     }
@@ -128,6 +127,19 @@ public class TimeController implements CriadorLocation{
         Time time = this.timeService.adicionarParticipante(nomeProjeto, nomeTime, username, role);
         TimeEUsuariosResponseDTO timeEUsuariosResponseDTO = this.timeMapper.toTimeEUsuariosResponseDTO(time);
         return ResponseEntity.ok(timeEUsuariosResponseDTO);
+    }
+
+
+    @PutMapping("/reativar")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    public ResponseEntity<TimeResponseDTO> reativar(
+            @RequestParam(name = "nome_projeto")
+            String nomeProjeto,
+            @RequestParam(name = "nome_time")
+            String nomeTime){
+        Time time = this.timeService.reativar(nomeProjeto, nomeTime);
+        TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(time);
+        return ResponseEntity.ok(timeResponseDTO);
     }
 
     @DeleteMapping
