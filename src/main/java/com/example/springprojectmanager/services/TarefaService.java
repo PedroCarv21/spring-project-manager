@@ -73,6 +73,10 @@ public class TarefaService {
 
         Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
 
+        if (statusTarefa != null){
+            tarefa.setStatus(statusTarefa);
+        }
+        this.verificarStatusTarefa(tarefa, "Tarefa está atualmente como 'CANCELADO'. Faça uma atualização do seu status");
         Usuario usuarioAutenticado = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuarioAutenticado);
         if (projetoUsuario.getRole().equals(Role.MEMBER) && !this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuarioAutenticado)){
@@ -111,9 +115,6 @@ public class TarefaService {
             tarefa.setDescricao(descricao);
         }
 
-        if (statusTarefa != null){
-            tarefa.setStatus(statusTarefa);
-        }
 
         return this.tarefaRepository.save(tarefa);
     }
@@ -140,7 +141,8 @@ public class TarefaService {
 
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
 
-        this.timeService.verificarStatusDoTime(tarefa.getTime());
+        this.verificarStatusTarefa(tarefa, "Tarefa está atualmente como 'CANCELADO'. Faça uma atualização do seu status");
+
 
         if (!this.tarefaEUsuarioEstaoNoMesmoTime(projeto.getId(), tarefa.getNome(), usuario.getNome())){
             throw new ConflitoException("A tarefa e o usuário devem estar no mesmo time para que sejam vinculados um ao outro.");
@@ -154,6 +156,7 @@ public class TarefaService {
             }
         }
 
+        this.timeService.verificarStatusDoTime(tarefa.getTime());
 
         if (this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario)){
             throw new ConflitoException("Este usuário já está vinculado a tarefa");
@@ -221,7 +224,6 @@ public class TarefaService {
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
 
-        this.timeService.verificarStatusDoTime(tarefa.getTime());
 
         boolean existeTarefaUsuario = this.tarefaUsuarioService.existeTarefaUsuario(tarefa, usuario);
         if (!existeTarefaUsuario){
@@ -231,17 +233,16 @@ public class TarefaService {
         return tarefa;
     }
 
-    @Transactional
     public void deletar(UUID id, String nomeTarefa){
-
-        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
-        this.projetoService.verificarStatusDoProjeto(projeto);
-
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
-        if (tarefa.getTime() != null){
-            this.timeService.verificarStatusDoTime(tarefa.getTime());
+        this.verificarStatusTarefa(tarefa, "A tarefa já está cancelada.");
+        tarefa.setStatus(StatusTarefa.CANCELADO);
+        this.tarefaRepository.save(tarefa);
+    }
+
+    public void verificarStatusTarefa(Tarefa tarefa, String msg){
+        if (tarefa.getStatus().equals(StatusTarefa.CANCELADO)){
+            throw new ConflitoException(msg);
         }
-        tarefa.getUsuarioRelacionados().forEach(tu -> this.tarefaUsuarioService.desvincularTarefaDoUsuario(tarefa, tu.getUsuario()));
-        this.tarefaRepository.delete(tarefa);
     }
 }

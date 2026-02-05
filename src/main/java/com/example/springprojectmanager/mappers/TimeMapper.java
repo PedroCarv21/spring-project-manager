@@ -3,6 +3,8 @@ package com.example.springprojectmanager.mappers;
 import com.example.springprojectmanager.dtos.TimeEUsuariosResponseDTO;
 import com.example.springprojectmanager.dtos.TimeResponseDTO;
 import com.example.springprojectmanager.entities.Time;
+import com.example.springprojectmanager.enums.StatusTarefa;
+import com.example.springprojectmanager.enums.StatusTarefaAtualizacao;
 import com.example.springprojectmanager.services.TimeUsuarioService;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

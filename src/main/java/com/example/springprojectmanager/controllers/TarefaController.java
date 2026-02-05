@@ -4,9 +4,11 @@ import com.example.springprojectmanager.dtos.TarefaResponseDTO;
 import com.example.springprojectmanager.dtos.TarefaUsuariosResponseDTO;
 import com.example.springprojectmanager.entities.Tarefa;
 import com.example.springprojectmanager.enums.StatusTarefa;
+import com.example.springprojectmanager.enums.StatusTarefaAtualizacao;
 import com.example.springprojectmanager.mappers.TarefaMapper;
 import com.example.springprojectmanager.services.TarefaService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,8 +54,9 @@ public class TarefaController {
             @RequestParam(name = "descricao", required = false)
             String descricao,
             @RequestParam(name = "status_tarefa", required = false)
-            StatusTarefa statusTarefa
+            StatusTarefaAtualizacao statusTarefaAtualizacao
     ){
+        StatusTarefa statusTarefa = this.tarefaMapper.toStatusTarefa(statusTarefaAtualizacao);
         Tarefa tarefa = this.tarefaService.atualizar(id, nomeTime, antigoNomeTarefa, novoNomeTarefa, descricao, statusTarefa);
 
         TarefaResponseDTO tarefaResponseDTO = this.tarefaMapper.toDTO(tarefa);
@@ -103,16 +106,14 @@ public class TarefaController {
         return ResponseEntity.ok(tarefaUsuariosResponseDTO);
     }
 
-
     @DeleteMapping("/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) " +
-            "and @tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
-            "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> deletar(
             @PathVariable("id")
             UUID id,
             @RequestParam("nome_tarefa")
             String nomeTarefa){
+
         this.tarefaService.deletar(id, nomeTarefa);
         return ResponseEntity.noContent().build();
     }
