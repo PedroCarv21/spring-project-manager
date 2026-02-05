@@ -47,6 +47,11 @@ public class ProjetoService {
     public Projeto atualizar(String nomeAtual, String novoNome, StatusProjeto statusProjeto){
 
         Projeto projetoCapturado = this.capturarProjetoAdministradoPorVoce(nomeAtual).get();
+        if (statusProjeto != null){
+            projetoCapturado.setStatus(statusProjeto);
+        }
+
+        this.verificarStatusDoProjeto(projetoCapturado);
 
         if (novoNome != null && !novoNome.strip().equals("")) {
             List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorUsuario();
@@ -57,9 +62,6 @@ public class ProjetoService {
                 throw new ConflitoException("Já existe um projeto com o nome " + novoNome + ".");
             }
             projetoCapturado.setNome(novoNome);
-        }
-        if (statusProjeto != null){
-            projetoCapturado.setStatus(statusProjeto);
         }
         return this.projetoRepository.save(projetoCapturado);
     }
@@ -144,7 +146,7 @@ public class ProjetoService {
 
     public void verificarStatusDoProjeto(Projeto projeto){
         if (projeto.getStatus().equals(StatusProjeto.CANCELADO)){
-            throw new ConflitoException("Não é possível realizar essa ação com o projeto cancelado");
+            throw new ConflitoException("Não é possível realizar essa ação com o projeto cancelado. Atualize o seu status.");
         }
     }
 }
