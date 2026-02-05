@@ -52,4 +52,8 @@ public class ProjetoUsuarioService {
         ProjetoUsuario projetoUsuario = this.buscarProjetoUsuario(projeto, usuario);
         this.projetoUsuarioRepository.delete(projetoUsuario);
     }
+
+    public boolean existeProjetoUsuario(Projeto projeto, Usuario usuario){
+        return this.projetoUsuarioRepository.existsByProjetoAndUsuario(projeto, usuario);
+    }
 }

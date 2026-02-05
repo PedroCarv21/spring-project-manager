@@ -14,4 +14,6 @@ public interface TimeUsuarioRepository extends JpaRepository<TimeUsuario, TimeUs
     List<TimeUsuario> findByTime(Time time);
 
     Optional<TimeUsuario> findByTimeAndUsuario(Time time, Usuario usuario);
+
+    boolean existsByTimeAndUsuario(Time time, Usuario usuario);
 }

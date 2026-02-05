@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -78,16 +79,20 @@ public class TarefaController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
+    @PreAuthorize("@projetoUsuarioService.existeProjetoUsuario(@projetoService.capturarProjetoPorId(#id), @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado()) " +
             "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
-    public ResponseEntity<TarefaUsuariosResponseDTO> buscarTarefa(
+    public ResponseEntity<List<TarefaUsuariosResponseDTO>> buscarTarefas(
             @PathVariable("id")
             UUID id,
-            @RequestParam("nome_tarefa")
+            @RequestParam(value = "nome_tarefa", required = false)
             String nomeTarefa){
-        Tarefa tarefa = this.tarefaService.buscarTarefa(id, nomeTarefa);
-        TarefaUsuariosResponseDTO tarefaUsuariosResponseDTO = this.tarefaMapper.toTarefaUsuariosResponseDTO(tarefa);
-        return ResponseEntity.ok(tarefaUsuariosResponseDTO);
+
+        List<Tarefa> tarefas = this.tarefaService.buscarTarefas(id, nomeTarefa);
+        List<TarefaUsuariosResponseDTO> tarefaUsuariosResponseDTOList = tarefas
+                .stream()
+                .map(this.tarefaMapper::toTarefaUsuariosResponseDTO)
+                .toList();
+        return ResponseEntity.ok(tarefaUsuariosResponseDTOList);
     }
 
     @DeleteMapping("desvicular_tarefa_usuario/{id}")

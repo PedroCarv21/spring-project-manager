@@ -38,14 +38,7 @@ public class TimeUsuarioService {
         this.timeUsuarioRepository.delete(timeUsuario);
     }
 
-//    public List<TimeUsuario> buscarTodos(){
-//        List<TimeUsuario> timeUsuarioList = this.timeUsuarioRepository.findAll();
-//        return timeUsuarioList;
-//    }
-//
-//    public boolean existeUsuarioNesteTime(Time time, Usuario usuario){
-//        return this.buscarTodos()
-//                .stream()
-//                .anyMatch(timeUsuario -> timeUsuario.getUsuario().getId().equals(usuario.getId()) && timeUsuario.getTime().getId().equals(time.getId()));
-//    }
+    public boolean existeTimeUsuario(Time time, Usuario usuario){
+        return this.timeUsuarioRepository.existsByTimeAndUsuario(time, usuario);
+    }
 }

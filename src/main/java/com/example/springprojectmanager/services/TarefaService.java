@@ -176,6 +176,35 @@ public class TarefaService {
                 .orElseThrow(() -> new NaoEncontradoException("Tarefa não encontrada."));
     }
 
+    public List<Tarefa> buscarTarefas(UUID id, String nomeTarefa) {
+        Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        Usuario usuario = fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
+        ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
+        Tarefa tarefa;
+        if (projetoUsuario.getRole().equals(Role.ADMIN)){
+            if (nomeTarefa == null || nomeTarefa.isBlank()) {
+                    return projeto.getTarefas();
+                }
+            tarefa = this.buscarTarefa(id, nomeTarefa);
+            return List.of(tarefa);
+        }
+        if (nomeTarefa == null || nomeTarefa.isBlank()){
+            List<Time> times = projeto.getTimes();
+            Time time = times
+                    .stream()
+                    .filter(t -> this.timeUsuarioService.existeTimeUsuario(t, usuario))
+                    .findFirst()
+                    .get();
+            return time.getTarefas();
+        }
+        tarefa = this.buscarTarefa(id, nomeTarefa);
+        boolean tarefaEUsuarioEstaoNoMesmoTime = this.tarefaEUsuarioEstaoNoMesmoTime(id, nomeTarefa, usuario.getNome());
+        if (!tarefaEUsuarioEstaoNoMesmoTime){
+            throw new AccessDeniedException("Esta tarefa não se encontra no seu time.");
+        }
+        return List.of(tarefa);
+    }
+
     public List<Usuario> buscarUsuariosDaTarefa(UUID id, String nomeTarefa){
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
         return tarefa
