@@ -26,7 +26,7 @@ public class TarefaController {
     private final TarefaMapper tarefaMapper;
 
     @PostMapping("/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaResponseDTO> salvar(
             @PathVariable("id")
             UUID id,
@@ -65,7 +65,7 @@ public class TarefaController {
     }
 
     @PutMapping("vincular_tarefa_usuario/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaUsuariosResponseDTO> vincularTarefaAUmParticipante(
             @PathVariable("id")
             UUID id,
@@ -96,7 +96,7 @@ public class TarefaController {
     }
 
     @DeleteMapping("desvicular_tarefa_usuario/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) " +
+    @PreAuthorize("@projetoService.possuiAutorizacao(#id) " +
             "and @tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
             "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TarefaUsuariosResponseDTO> desvincularTarefaDoUsuario(
@@ -112,7 +112,7 @@ public class TarefaController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaSolicitar(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> deletar(
             @PathVariable("id")
             UUID id,

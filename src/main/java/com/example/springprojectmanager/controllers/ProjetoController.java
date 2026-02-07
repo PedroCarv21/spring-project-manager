@@ -38,7 +38,7 @@ public class ProjetoController implements CriadorLocation{
     }
 
     @PutMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeAtual) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeAtual) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<ProjetoResponseDTO> atualizar(
             @NotBlank(message = "Informe nome atual do seu projeto.")
             @RequestParam(value = "nome_atual")
@@ -67,7 +67,7 @@ public class ProjetoController implements CriadorLocation{
     }
 
     @DeleteMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nome) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nome) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome") String nome){

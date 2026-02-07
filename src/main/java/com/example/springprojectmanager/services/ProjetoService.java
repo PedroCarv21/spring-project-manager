@@ -81,7 +81,7 @@ public class ProjetoService {
                 .orElseThrow(() -> new NaoEncontradoException("Projeto não encontrado"));
     }
 
-    public boolean possuiAutorizacaoParaAtualizar(String nomeAtual){
+    public boolean possuiAutorizacao(String nomeAtual){
         List<Projeto> projetos = this.projetoUsuarioService.listarProjetosDoUsuarioAutenticado();
 
         boolean existeProjetoComEsteNome = this.existeProjetoComEsteNome(projetos, nomeAtual);
@@ -93,7 +93,7 @@ public class ProjetoService {
         return projetoOptional.isPresent();
     }
 
-    public boolean possuiAutorizacaoParaSolicitar(UUID id){
+    public boolean possuiAutorizacao(UUID id){
         Projeto projeto = this.capturarProjetoPorId(id);
         Usuario usuario = this.fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado();
         ProjetoUsuario projetoUsuario = this.projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);

@@ -11,8 +11,6 @@ spring:
     properties:
       hibernate.format-sql: true
     hibernate:
-      jdbc:
-        time_zone: America/Sao_Paulo
       ddl-auto: none
 springdoc:
   swagger-ui:

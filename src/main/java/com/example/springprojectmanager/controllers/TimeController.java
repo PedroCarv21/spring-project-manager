@@ -54,7 +54,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @PostMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<ProjetoTimeReponseDTO> salvar(
             @NotBlank(message = "Informe um nome para o novo projeto.")
             @RequestParam("nome_projeto") String nomeProjeto,
@@ -68,7 +68,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @PutMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TimeResponseDTO> atualizar(
             @NotBlank(message = "Informe o nome do projeto.")
             @RequestParam("nome_projeto") String nomeProjeto,
@@ -82,7 +82,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @PutMapping("atualizar_participante")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TimeEUsuariosResponseDTO> atualizarParticipante(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -112,7 +112,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @PostMapping("/adicionar_participante")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TimeEUsuariosResponseDTO> adicionarParticipante(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -131,7 +131,7 @@ public class TimeController implements CriadorLocation{
 
 
     @PutMapping("/reativar")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<TimeResponseDTO> reativar(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -143,7 +143,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @DeleteMapping
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome_projeto")
@@ -156,7 +156,7 @@ public class TimeController implements CriadorLocation{
     }
 
     @DeleteMapping("/excluir_participante")
-    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     public ResponseEntity<Void> excluirUsuario(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
