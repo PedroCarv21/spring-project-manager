@@ -16,6 +16,7 @@ import com.example.springprojectmanager.repositories.ProjetoRepository;
 import com.example.springprojectmanager.security.FornecedorUsuarioAutenticado;
 import com.example.springprojectmanager.services.ProjetoService;
 import com.example.springprojectmanager.services.TimeService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,12 @@ public class TimeController implements CriadorLocation{
     private final UsuarioMapper usuarioMapper;
 
     @GetMapping
-//    @PreAuthorize("@projetoService.possuiAutorizacaoParaAtualizar(#nomeProjeto)")
+    @Operation(
+            description = """
+                    Consulta os times daquele projeto. Se não for informado o nome do time, a resposta será os dados do projeto e a lista de todos times
+                    vinculados a ele. No entanto, informe o nome do time, será retornado os dados do projeto e somente o time solicitado. Se não for encontrado
+                    irá retornar a mensagem "Não existe um time chamado" + nome do time informado.
+                    """)
     public ResponseEntity<List<ProjetoTimeReponseDTO>> pesquisar(
             @NotBlank(message = "Informe o nome do projeto")
             @RequestParam(name = "nome_projeto")
@@ -55,6 +61,11 @@ public class TimeController implements CriadorLocation{
 
     @PostMapping
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Cria um novo time vinculado ao projeto informado. Não é permitido
+                    criar dois times com o mesmo nome.
+                    """)
     public ResponseEntity<ProjetoTimeReponseDTO> salvar(
             @NotBlank(message = "Informe um nome para o novo projeto.")
             @RequestParam("nome_projeto") String nomeProjeto,
@@ -69,12 +80,16 @@ public class TimeController implements CriadorLocation{
 
     @PutMapping
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Atualiza somente o nome do time.
+                    """)
     public ResponseEntity<TimeResponseDTO> atualizar(
             @NotBlank(message = "Informe o nome do projeto.")
             @RequestParam("nome_projeto") String nomeProjeto,
             @NotBlank(message = "Informe o nome atual do time.")
             @RequestParam("nome_atual_time") String nomeAtualTime,
-            @RequestParam(value = "novo_nome_time", required = false) String novoNomeTime){
+            @RequestParam(value = "novo_nome_time") String novoNomeTime){
 
         Time timeAtualizado = this.timeService.atualizar(nomeProjeto, nomeAtualTime, novoNomeTime);
         TimeResponseDTO timeResponseDTO = this.timeMapper.toDTO(timeAtualizado);
@@ -83,6 +98,12 @@ public class TimeController implements CriadorLocation{
 
     @PutMapping("atualizar_participante")
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Atualiza a role do usuário do projeto para 'MANAGER' ou 'MEMBER'.
+                    Não é possível atualizar a role para ADMIN, pois só aquele que cria
+                    o projeto pode ser o administrador.
+                    """)
     public ResponseEntity<TimeEUsuariosResponseDTO> atualizarParticipante(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -113,6 +134,11 @@ public class TimeController implements CriadorLocation{
 
     @PostMapping("/adicionar_participante")
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Adiciona um participante no projeto, vinculando ele a
+                    um time já desde o início.
+                    """)
     public ResponseEntity<TimeEUsuariosResponseDTO> adicionarParticipante(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -132,6 +158,10 @@ public class TimeController implements CriadorLocation{
 
     @PutMapping("/reativar")
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Muda o status do time informado para ATIVO.
+                    """)
     public ResponseEntity<TimeResponseDTO> reativar(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,
@@ -144,6 +174,12 @@ public class TimeController implements CriadorLocation{
 
     @DeleteMapping
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Muda o status do time informado para ENCERRADO. Se tentar encerrar o mesmo time
+                    mais de uma vezes, aparecerá a mensagem "Não é possível realizar essa ação 
+                    pois o time " + nome do time +" foi encerrado.".
+                    """)
     public ResponseEntity<Void> deletar(
             @NotBlank(message = "Informe o nome de um projeto")
             @RequestParam("nome_projeto")
@@ -157,6 +193,11 @@ public class TimeController implements CriadorLocation{
 
     @DeleteMapping("/excluir_participante")
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Exclui o usuário informado do projeto, considerando que um usuário (MEMBER ou MANAGER) só está
+                    vinculado a um projeto se ele estiver vinculado a algum time do projeto.
+                    """)
     public ResponseEntity<Void> excluirUsuario(
             @RequestParam(name = "nome_projeto")
             String nomeProjeto,

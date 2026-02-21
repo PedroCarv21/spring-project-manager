@@ -55,7 +55,7 @@ public class TimeService {
         projetos = projetos.stream().filter(projeto -> !projeto.getTimes().isEmpty()).toList();
 
         if (projetos.isEmpty()){
-            throw new NaoEncontradoException("Não existe nenhum projeto com um time chamado '" + nomeTime + "'.");
+            throw new NaoEncontradoException("Não existe um time chamado '" + nomeTime + "'.");
         }
         return projetos;
     }
@@ -146,6 +146,8 @@ public class TimeService {
     }
     public Time reativar(String nomeProjeto, String nomeTime){
         Projeto projeto = this.projetoService.buscarPorNome(nomeProjeto);
+        this.projetoService.verificarStatusDoProjeto(projeto);
+
         Time time = this.capturarTime(projeto, nomeTime).orElseThrow(() -> new ConflitoException("Time não encontrado."));
         time.setStatus(StatusTime.ATIVO);
         return this.timeRepository.save(time);

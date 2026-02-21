@@ -7,6 +7,7 @@ import com.example.springprojectmanager.enums.StatusTarefa;
 import com.example.springprojectmanager.enums.StatusTarefaAtualizacao;
 import com.example.springprojectmanager.mappers.TarefaMapper;
 import com.example.springprojectmanager.services.TarefaService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,12 @@ public class TarefaController {
 
     @PostMapping("/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Cria uma nova tarefa, que pode ou não estar inicialmente vinculada a um time específico. No entanto,
+                    se for gerente, é necessário informar o nome do seu time. Não é possível criar duas ou mais tarefas com
+                    o mesmo nome.
+                    """)
     public ResponseEntity<TarefaResponseDTO> salvar(
             @PathVariable("id")
             UUID id,
@@ -43,6 +50,14 @@ public class TarefaController {
 
     @PutMapping("/{id}")
     @PreAuthorize("@tarefaService.temPermissaoParaInteragirComTarefa(#id, #antigoNomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    A atualização da tarefa é possível tanto para todos os tipos de usuários vinculados aquele projeto. Deve-se seguir as seguintes regras: \n
+                    - A tarefa não pode estar com status 'CANCELADO'. \n
+                    - Caso seja um usuário MANAGER, só poderá atualizar tarefas do seu time. \n
+                    - Caso seja um usuário MEMBER, só poderá atualizar tarefas vinculadas a você. \n
+                    - Caso seja um usuário MEMBER, só poderá atualizar o status da tarefa.
+                    """)
     public ResponseEntity<TarefaResponseDTO> atualizar(
             @PathVariable("id")
             UUID id,
@@ -66,6 +81,12 @@ public class TarefaController {
 
     @PutMapping("vincular_tarefa_usuario/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Vincula um usuário (que não seja o próprio administrador) a uma tarefa, sendo necessário que ambos
+                    estejam no mesmo time. Caso você seja um gerente, é necessário estar no mesmo time que tarefa e o usuário.
+                    Não será possível criar um vínculo caso a tarefa esteja com o status CANCELADO.
+                    """)
     public ResponseEntity<TarefaUsuariosResponseDTO> vincularTarefaAUmParticipante(
             @PathVariable("id")
             UUID id,
@@ -81,6 +102,17 @@ public class TarefaController {
     @GetMapping("/{id}")
     @PreAuthorize("@projetoUsuarioService.existeProjetoUsuario(@projetoService.capturarProjetoPorId(#id), @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado()) " +
             "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Há quatro possibilidades de consulta: \n
+                    - Se for o administrador e informar apenas o id do projeto, serão expostas todas as tarefas do projeto. \n
+                    - Se for o administrador e informar também o nome da tarefa, será apresentado aquela tarefa em especial. \n
+                    - Se for um usuário (MEMBER ou MANAGER) e informar apenas o id do projeto, serão apresentados todos
+                    as tarefas do seu devido time. \n
+                    - Se for um usuário (MEMBER ou MANAGER) e informar também o nome da tarefa, que deve estar vinculada ao 
+                    time do usuário, será apresentado aquela tarefa em especial. Se tentar solicitar uma tarefa que não está
+                    no seu time, aparecerá a mensagem "Esta tarefa não se encontra no seu time."
+                    """)
     public ResponseEntity<List<TarefaUsuariosResponseDTO>> buscarTarefas(
             @PathVariable("id")
             UUID id,
@@ -99,6 +131,11 @@ public class TarefaController {
     @PreAuthorize("@projetoService.possuiAutorizacao(#id) " +
             "and @tarefaService.temPermissaoParaInteragirComTarefa(#id, #nomeTarefa, @fornecedorUsuarioAutenticado.fornecerUsuarioAutenticado().getNome()) " +
             "and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Desvincula tarefa do usuário. Caso eles já não estejam vinculados, aparecerá
+                    uma mensagem "Usuário e tarefa não estão vinculados".
+                    """)
     public ResponseEntity<TarefaUsuariosResponseDTO> desvincularTarefaDoUsuario(
             @PathVariable("id")
             UUID id,
@@ -113,6 +150,11 @@ public class TarefaController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@projetoService.possuiAutorizacao(#id) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
+    @Operation(
+            description = """
+                    Muda o status da tarefa para CANCELADO. Se a tarefa já estiver cancelada, aparecerá a mensagem
+                    "A tarefa já está cancelada.".
+                    """)
     public ResponseEntity<Void> deletar(
             @PathVariable("id")
             UUID id,
