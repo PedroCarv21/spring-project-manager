@@ -4,6 +4,7 @@ import com.example.springprojectmanager.entities.*;
 import com.example.springprojectmanager.entities.chavesprimariascompostas.TarefaUsuarioId;
 import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusTarefa;
+import com.example.springprojectmanager.enums.StatusUsuario;
 import com.example.springprojectmanager.exceptions.ConflitoException;
 import com.example.springprojectmanager.exceptions.NaoEncontradoException;
 import com.example.springprojectmanager.repositories.TarefaRepository;
@@ -34,6 +35,7 @@ public class TarefaService {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
         this.projetoService.verificarStatusDoProjeto(projeto);
+        this.administradorEstaAtivo(id);
 
         boolean existeTarefaComEsteNome = projeto.getTarefas().stream().anyMatch(t -> t.getNome().equals(nomeTarefa));
         if (existeTarefaComEsteNome){
@@ -70,6 +72,7 @@ public class TarefaService {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
         this.projetoService.verificarStatusDoProjeto(projeto);
+        this.administradorEstaAtivo(id);
 
         Tarefa tarefa = this.buscarTarefa(id, antigoNomeTarefa);
 
@@ -131,6 +134,7 @@ public class TarefaService {
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
 
         this.projetoService.verificarStatusDoProjeto(projeto);
+        this.administradorEstaAtivo(id);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         ProjetoUsuario projetoUsuario = projetoUsuarioService.buscarProjetoUsuario(projeto, usuario);
@@ -249,6 +253,7 @@ public class TarefaService {
     public Tarefa desvincularTarefaDoUsuario(UUID id, String nomeTarefa, String username){
 
         Projeto projeto = this.projetoService.capturarProjetoPorId(id);
+        this.administradorEstaAtivo(id);
 
         Usuario usuario = this.usuarioService.buscarPorNome(username);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
@@ -263,6 +268,7 @@ public class TarefaService {
     }
 
     public void deletar(UUID id, String nomeTarefa){
+        this.administradorEstaAtivo(id);
         Tarefa tarefa = this.buscarTarefa(id, nomeTarefa);
         this.verificarStatusTarefa(tarefa, "A tarefa já está cancelada.");
         tarefa.setStatus(StatusTarefa.CANCELADO);
@@ -272,6 +278,19 @@ public class TarefaService {
     public void verificarStatusTarefa(Tarefa tarefa, String msg){
         if (tarefa.getStatus().equals(StatusTarefa.CANCELADO)){
             throw new ConflitoException(msg);
+        }
+    }
+
+    public void administradorEstaAtivo(UUID idProjeto){
+        Projeto projeto = this.projetoService.capturarProjetoPorId(idProjeto);
+        List<ProjetoUsuario> projetoUsuarioList = this.projetoUsuarioService.listarPorProjeto(projeto);
+        Usuario admin = projetoUsuarioList
+                .stream()
+                .filter(pu -> pu.getRole().equals(Role.ADMIN))
+                .findFirst()
+                .map(ProjetoUsuario::getUsuario).get();
+        if (admin.getStatus().equals(StatusUsuario.DESATIVADO)){
+            throw new AccessDeniedException("Não é possível realizar esta ação, pois o administrador deste projeto está com a conta desativada.");
         }
     }
 }

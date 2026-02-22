@@ -132,7 +132,7 @@ public class TimeController implements CriadorLocation{
         return ResponseEntity.ok(timeEUsuariosResponseDTOAtualizado);
     }
 
-    @PostMapping("/adicionar_participante")
+    @PutMapping("/adicionar_participante")
     @PreAuthorize("@projetoService.possuiAutorizacao(#nomeProjeto) and @fornecedorUsuarioAutenticado.permaneceComContaAtiva()")
     @Operation(
             description = """

@@ -33,6 +33,10 @@ public class ProjetoUsuarioService {
         return this.projetoUsuarioRepository.findByUsuario(usuarioAutenticado);
     }
 
+    public List<ProjetoUsuario> listarPorProjeto(Projeto projeto){
+        return this.projetoUsuarioRepository.findByProjeto(projeto);
+    }
+
     public ProjetoUsuario salvar(Projeto projeto, Usuario usuario, Role role){
         ProjetoUsuario projetoUsuario = new ProjetoUsuario(new ProjetoUsuarioId(), projeto, usuario, role);
         return this.projetoUsuarioRepository.save(projetoUsuario);

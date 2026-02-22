@@ -13,6 +13,8 @@ public interface ProjetoUsuarioRepository extends JpaRepository<ProjetoUsuario, 
 
     List<ProjetoUsuario> findByUsuario(Usuario usuario);
 
+    List<ProjetoUsuario> findByProjeto(Projeto projeto);
+
     Optional<ProjetoUsuario> findByProjetoAndUsuario(Projeto projeto, Usuario usuario);
 
     boolean existsByProjetoAndUsuario(Projeto projeto, Usuario usuario);
