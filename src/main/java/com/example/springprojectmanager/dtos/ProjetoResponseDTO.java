@@ -1,5 +1,6 @@
 package com.example.springprojectmanager.dtos;
 
+import com.example.springprojectmanager.enums.Role;
 import com.example.springprojectmanager.enums.StatusProjeto;
 
 import java.time.LocalDateTime;
@@ -10,5 +11,6 @@ public record ProjetoResponseDTO(
         String nome,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao,
-        StatusProjeto status) {
+        StatusProjeto status,
+        Role role) {
 }
